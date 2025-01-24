@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: apitrini-backend
+    ports:
+      - "5000:5000"  # On expose directement le port 5000 puisqu'on n'a pas encore nginx
+    volumes:
+      - ./backend:/app
+    networks:
+      - apitrini-network
+
+networks:
+  apitrini-network:
+    name: apitrini-network
