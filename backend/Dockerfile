@@ -9,5 +9,5 @@ COPY . .
 
 RUN pip install -e .
 
-CMD ["python", "-m", "apitrini.core.api"]
+CMD ["python", "run.py"]
 
