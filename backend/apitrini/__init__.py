@@ -5,7 +5,7 @@ from apitrini.api.routes.image_routes import image_bp
 
 def create_app():
     app = Flask(__name__)
-    CORS(app)  # Permet les requêtes cross-origin depuis votre frontend
+    CORS(app, supports_credentials=True)
 
     # Enregistrement des blueprints
     app.register_blueprint(image_bp, url_prefix='/api/images')
