@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const fetchUserData = async (token) => {
+        let data = null;
         try {
             const response = await fetch('http://localhost:5000/api/auth/me', {
                 headers: {
@@ -24,7 +25,7 @@ export const AuthProvider = ({ children }) => {
                 }
             });
             if (response.ok) {
-                const data = await response.json();
+                data = await response.json();
                 setUser(data.user);
             } else {
                 localStorage.removeItem('token');
@@ -34,6 +35,8 @@ export const AuthProvider = ({ children }) => {
             localStorage.removeItem('token');
         }
         setLoading(false);
+
+        return data;
     };
 
     const login = async (email, password) => {
@@ -90,7 +93,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading, register}}>
+        <AuthContext.Provider value={{ user, login, logout, loading, register, fetchUserData}}>
             {children}
         </AuthContext.Provider>
     );
