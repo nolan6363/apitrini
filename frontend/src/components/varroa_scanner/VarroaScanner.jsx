@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect} from 'react';
 import ImageUploader from '@/components/features/image/ImageUploader';
 import ImageDisplay from '@/components/features/image/ImageDisplay';
@@ -6,11 +5,11 @@ import ImageDisplay from '@/components/features/image/ImageDisplay';
 function VarroaScanner() {
     const [selectedImage, setSelectedImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
+    const [processedImageUrl, setProcessedImageUrl] = useState(null);
     const [processing, setProcessing] = useState(false);
     const [results, setResults] = useState(null);
     const [error, setError] = useState(null);
 
-    // Mise à jour de la prévisualisation quand une image est sélectionnée
     useEffect(() => {
         if (selectedImage) {
             const objectUrl = URL.createObjectURL(selectedImage);
@@ -25,6 +24,7 @@ function VarroaScanner() {
             setSelectedImage(file);
             setError(null);
             setResults(null);
+            setProcessedImageUrl(null);
         }
     };
 
@@ -49,6 +49,11 @@ function VarroaScanner() {
 
             const data = await response.json();
             setResults(data);
+
+            // Si l'API renvoie le nom de l'image traitée
+            if (data.processed_image) {
+                setProcessedImageUrl(`http://localhost:5000/api/images/get/${data.processed_image}`);
+            }
         } catch (err) {
             setError(err.message);
             setResults(null);
@@ -62,28 +67,45 @@ function VarroaScanner() {
             <h1 className="text-2xl font-bold text-center">Détection de Varroas</h1>
 
             {/* Section de sélection d'image */}
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    className="hidden"
-                    id="image-input"
-                />
-                <label
-                    htmlFor="image-input"
-                    className="block text-center cursor-pointer"
-                >
-                    {previewUrl ? (
+            <div className="grid grid-cols-2 gap-4">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                        id="image-input"
+                    />
+                    <label
+                        htmlFor="image-input"
+                        className="block text-center cursor-pointer"
+                    >
+                        {previewUrl ? (
+                            <img
+                                src={previewUrl}
+                                alt="Image originale"
+                                className="max-h-64 mx-auto rounded"
+                            />
+                        ) : (
+                            <p>Cliquez pour sélectionner une image</p>
+                        )}
+                    </label>
+                </div>
+
+                {/* Affichage de l'image traitée */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    {processedImageUrl ? (
                         <img
-                            src={previewUrl}
-                            alt="Aperçu"
+                            src={processedImageUrl}
+                            alt="Image traitée"
                             className="max-h-64 mx-auto rounded"
                         />
                     ) : (
-                        <p>Cliquez pour sélectionner une image</p>
+                        <div className="h-full flex items-center justify-center text-gray-500">
+                            L'image traitée apparaîtra ici
+                        </div>
                     )}
-                </label>
+                </div>
             </div>
 
             {/* Bouton de traitement */}

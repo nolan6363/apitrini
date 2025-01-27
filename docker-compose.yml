@@ -1,43 +1,73 @@
-version: '3.8'
+  services:
+    backend:
+      build: ./backend
+      container_name: apitrini-backend
+      ports:
+        - "5000:5000"
+      volumes:
+        - ./backend:/app
+        - ./backend/storage:/app/storage
+      environment:
+        - MYSQL_HOST=db
+        - MYSQL_USER=apitrini
+        - MYSQL_PASSWORD=#GetTheBeesToWork/667
+        - MYSQL_DATABASE=apitrini_db
+      depends_on:
+        - db
+      networks:
+        - apitrini-network
 
-services:
-  backend:
-    build: ./backend
-    container_name: apitrini-backend
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./backend:/app
-    networks:
-      - apitrini-network
+    frontend:
+      build: ./frontend
+      container_name: apitrini-frontend
+      ports:
+        - "5173:5173"
+      volumes:
+        - ./frontend:/frontend:cached
+        - /frontend/node_modules
+      environment:
+        - CHOKIDAR_USEPOLLING=true
+        - WATCHPACK_POLLING=true
+        - FAST_REFRESH=true
+        - VITE_DEV_SERVER_HOST=0.0.0.0
+        - VITE_DEV_SERVER_PORT=5173
+        - VITE_HMR_PROTOCOL=ws
+        - VITE_HMR_TIMEOUT=120000
+        - NODE_ENV=development
+      networks:
+        - apitrini-network
+      deploy:
+        resources:
+          limits:
+            cpus: '1'
+            memory: 1G
 
-  frontend:
-    build: ./frontend
-    container_name: apitrini-frontend
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/frontend:cached
-      - /frontend/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true
-      - FAST_REFRESH=true
-      - VITE_DEV_SERVER_HOST=0.0.0.0
-      - VITE_DEV_SERVER_PORT=5173
-      # Nouvelles variables pour améliorer la détection des changements
-      - VITE_HMR_PROTOCOL=ws
-      - VITE_HMR_TIMEOUT=120000
-      - NODE_ENV=development
-    networks:
-      - apitrini-network
-    # Nous ajoutons des paramètres pour optimiser les performances
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 1G
+    db:
+      image: mariadb:10.6
+      container_name: apitrini-db
+      restart: always
+      environment:
+        - MYSQL_ROOT_PASSWORD=#GetTheBeesToWork/667
+        - MYSQL_DATABASE=apitrini_db
+        - MYSQL_USER=apitrini
+        - MYSQL_PASSWORD=#GetTheBeesToWork/667
+      ports:
+        - "3307:3306"
+      volumes:
+        - mariadb_data:/var/lib/mysql
+        - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      networks:
+        - apitrini-network
+      deploy:
+        resources:
+          limits:
+            cpus: '1'
+            memory: 1G
 
-networks:
-  apitrini-network:
-    name: apitrini-network
+  networks:
+    apitrini-network:
+      name: apitrini-network
+
+  volumes:
+    mariadb_data:
+      driver: local
