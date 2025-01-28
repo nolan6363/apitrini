@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button';
+import {API_URL} from "@/config/api.js";
 
 function ImageDisplay({ selectedImage, analysisResult }) {
     // État local pour stocker l'URL de prévisualisation de l'image sélectionnée
@@ -23,7 +24,7 @@ function ImageDisplay({ selectedImage, analysisResult }) {
     useEffect(() => {
         if (analysisResult?.imagePath) {
             // Construction de l'URL pour récupérer l'image analysée
-            setAnalysisImage(`http://localhost:5000/api/images/${analysisResult.imagePath}`);
+            setAnalysisImage(`${API_URL}/api/images/${analysisResult.imagePath}`);
         }
     }, [analysisResult]);
 

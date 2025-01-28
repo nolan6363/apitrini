@@ -7,6 +7,7 @@ import VarroaScanner from "@/pages/VarroaScanner.jsx";
 import Register from "@/pages/Register";
 import ApiaryList from "@/pages/ApiaryList.jsx";
 import CheckAuth from "@/components/features/auth/CheckAuth";
+import HiveList from "@/pages/HiveList.jsx";
 
 // Pages temporaires
 const Home = () => <div className="p-4">Page d'accueil</div>;
@@ -22,11 +23,12 @@ function App() {
                     <Routes>
                         <Route path="/" element={<Home/>}/>
                         <Route path="/login" element={<Login/>}/>
-                        <Route path="/ruchers" element={<ApiaryList/>}/>
+                        <Route path="/apiaries" element={<ApiaryList/>}/>
                         <Route path="/varroa" element={<VarroaScanner/>}/>
-                        <Route path="/statistiques" element={<Stats/>}/>
+                        <Route path="/statistics" element={<Stats/>}/>
                         <Route path="/ressources" element={<Resources/>}/>
                         <Route path="/register" element={<Register/>}/>
+                        <Route path="/hives/:apiaryId" element={<HiveList />} />
                     </Routes>
                     {/*<CheckAuth/>*/}
                 </div>

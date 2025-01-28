@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button.jsx';
+import { API_URL } from "@/config/api.js";
 
 function ImageUploader({ onUploadSuccess, onUploadError }) {
     // Les états sont correctement initialisés avec des valeurs par défaut
@@ -42,7 +43,7 @@ function ImageUploader({ onUploadSuccess, onUploadError }) {
         formData.append('image', selectedImage);
 
         try {
-            const response = await fetch('http://localhost:5000/api/images/upload', {
+            const response = await fetch(`${API_URL}/api/images/upload`, {
                 method: 'POST',
                 body: formData,
                 // Nous ne définissons pas le Content-Type car il est automatiquement

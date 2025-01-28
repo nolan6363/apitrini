@@ -1,34 +1,29 @@
 import React, {useEffect, useState} from "react";
-import {useNavigate} from 'react-router-dom';
+import {useNavigate, useParams} from 'react-router-dom';
 import {API_URL} from "@/config/api.js";
 
-const ApiaryCard = ({apiary}) => {
-    const navigate = useNavigate();
-
-    const handleClick = () => {
-        navigate(`/hives/${apiary.id}`);  // ou le chemin que vous souhaitez
-    };
-
+const HiveCard = ({hive}) => {
     return (
-        <div className="w-64 h-40 border-2 m-1 p-4 border-blue-500 rounded-lg hover:shadow-lg transition-shadow"
-             onClick={handleClick}>
-            <p className="font-bold text-lg mb-2">{apiary.name}</p>
-            <p className="text-gray-600">{apiary.localisation}</p>
-            <p className="mt-2">{apiary.hiveNumber} ruches</p>
+        <div className="w-64 h-40 border-2 m-1 p-4 border-blue-500 rounded-lg hover:shadow-lg transition-shadow">
+            <p className="font-bold text-lg mb-2">{hive.name}</p>
         </div>
     );
 }
 
-function ApiaryList() {
-    const [apiaries, setApiaries] = useState([]);
+const HiveList = () => {
+    const {apiaryId} = useParams();
+    const [apiary, setApiary] = useState(null);
+    const [hives, setHives] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        fetchApiaryData();
+    let navigate = useNavigate();
+
+    useEffect (() => {
+        fetchHiveData();
     }, []);
 
-    const fetchApiaryData = async () => {
+    const fetchHiveData = async () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
@@ -37,12 +32,13 @@ function ApiaryList() {
                 throw new Error('Non authentifié');
             }
 
-            const response = await fetch(`${API_URL}/api/hives/get_apiary_list`, {
+            const response = await fetch(`${API_URL}/api/hives/get_hive_list`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
-                }
+                },
+                body: JSON.stringify({apiaryId})
             });
 
             if (!response.ok) {
@@ -50,7 +46,8 @@ function ApiaryList() {
             }
 
             const data = await response.json();
-            setApiaries(data);
+            setHives(data.hives);
+            setApiary(data.apiary);
         } catch (err) {
             setError(err.message);
             if (err.message === 'Non authentifié') {
@@ -67,18 +64,26 @@ function ApiaryList() {
     }
 
     if (error) {
-        return <div className="p-4 text-red-500">Erreur: {error}</div>;
+        return <div className="p-4">Erreur: {error}</div>;
     }
 
     return (
         <div className="p-4">
-            <h1 className="text-2xl font-bold mb-4">Mes Ruchers</h1>
+            <div className="mb-4">
+                <h1 className="text-2xl font-bold">{apiary?.name}</h1>
+                <button
+                    onClick={() => navigate('/apiaries')}
+                    className="mr-4 text-blue-500 hover:text-blue-700"
+                >
+                    ← Retour aux ruchers
+                </button>
+            </div>
             <div className="flex flex-wrap mt-4">
-                {apiaries.length > 0 ? (
-                    apiaries.map((apiary) => (
-                        <ApiaryCard
-                            key={apiary.id}
-                            apiary={apiary}
+                {hives.length > 0 ? (
+                    hives.map((hive) => (
+                        <HiveCard
+                            key={hive.id}
+                            hive={hive}
                         />
                     ))
                 ) : (
@@ -89,4 +94,4 @@ function ApiaryList() {
     );
 }
 
-export default ApiaryList;
+export default HiveList;

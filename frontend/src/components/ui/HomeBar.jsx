@@ -31,13 +31,13 @@ function HomeBar() {
                         <NavLink to="/" >
                             Accueil
                         </NavLink>
-                        <NavLink to="/ruchers">
+                        <NavLink to="/apiaries">
                             Mes Ruches
                         </NavLink>
                         <NavLink to="/varroa">
                             Comptage Varroas
                         </NavLink>
-                        <NavLink to="/statistiques">
+                        <NavLink to="/statistics">
                             Mes analyses
                         </NavLink>
                         <NavLink to="/ressources">

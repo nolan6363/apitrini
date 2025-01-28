@@ -1,6 +1,7 @@
 import React, { useState, useEffect} from 'react';
 import ImageUploader from '@/components/features/image/ImageUploader.jsx';
 import ImageDisplay from '@/components/features/image/ImageDisplay.jsx';
+import {API_URL} from "@/config/api.js";
 
 function VarroaScanner() {
     const [selectedImage, setSelectedImage] = useState(null);
@@ -38,7 +39,7 @@ function VarroaScanner() {
             const formData = new FormData();
             formData.append('image', selectedImage);
 
-            const response = await fetch('http://localhost:5000/api/images/process', {
+            const response = await fetch(`${API_URL}/api/images/process`, {
                 method: 'POST',
                 body: formData,
             });
@@ -52,7 +53,7 @@ function VarroaScanner() {
 
             // Si l'API renvoie le nom de l'image traitée
             if (data.processed_image) {
-                setProcessedImageUrl(`http://localhost:5000/api/images/get/${data.processed_image}`);
+                setProcessedImageUrl(`${API_URL}/api/images/get/${data.processed_image}`);
             }
         } catch (err) {
             setError(err.message);
