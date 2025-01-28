@@ -6,3 +6,7 @@ numpy
 opencv-python
 Pillow
 PyJWT==2.6.0
+--find-links https://download.pytorch.org/whl/cpu
+torch
+torchvision
+ultralytics

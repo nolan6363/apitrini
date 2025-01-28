@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext.jsx';
+import NavLink from '@/components/ui/NavLink.jsx';
 
 function HomeBar() {
     const navigate = useNavigate();
@@ -27,21 +28,21 @@ function HomeBar() {
 
                     {/* Navigation principale */}
                     <nav className="hidden md:flex items-center space-x-4">
-                        <Link to="/" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
+                        <NavLink to="/" >
                             Accueil
-                        </Link>
-                        <Link to="/ruches" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                            Gestion des Ruches
-                        </Link>
-                        <Link to="/varroa" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
+                        </NavLink>
+                        <NavLink to="/ruchers">
+                            Mes Ruches
+                        </NavLink>
+                        <NavLink to="/varroa">
                             Comptage Varroas
-                        </Link>
-                        <Link to="/statistiques" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                            Statistiques
-                        </Link>
-                        <Link to="/ressources" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
+                        </NavLink>
+                        <NavLink to="/statistiques">
+                            Mes analyses
+                        </NavLink>
+                        <NavLink to="/ressources">
                             Ressources
-                        </Link>
+                        </NavLink>
                     </nav>
 
                     {/* Bouton de connexion */}

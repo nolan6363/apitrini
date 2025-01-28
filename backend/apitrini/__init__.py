@@ -1,8 +1,11 @@
 from flask import Flask
 from flask_cors import CORS
+
 from apitrini.core.infrastructure.db import mysql
 from apitrini.api.routes.image_routes import image_bp
 from apitrini.api.routes.auth_routes import auth_bp
+from apitrini.api.routes.hives_routes import hives_bp
+
 import os
 
 
@@ -32,5 +35,6 @@ def create_app():
     # Enregistrement des blueprints
     app.register_blueprint(image_bp, url_prefix='/api/images')
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(hives_bp, url_prefix='/api/hives')
 
     return app

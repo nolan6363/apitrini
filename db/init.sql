@@ -22,7 +22,7 @@ CREATE TABLE relations_user_rucher (
     rucher_id_fk INT NOT NULL,
     role VARCHAR(50) DEFAULT 'owner',
     FOREIGN KEY (user_id_fk) REFERENCES user(id) ON DELETE CASCADE,
-    FOREIGN KEY (rucher_id_fk) REFERENCES rucher(id) ON DELETE CASCADE
+    FOREIGN KEY (rucher_id_fk) REFERENCES apiary(id) ON DELETE CASCADE
 );
 
 CREATE TABLE ruche (
@@ -30,7 +30,7 @@ CREATE TABLE ruche (
     nom VARCHAR(255) NOT NULL,
     rucher_id_fk INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
-    FOREIGN KEY (rucher_id_fk) REFERENCES rucher(id) ON DELETE CASCADE
+    FOREIGN KEY (rucher_id_fk) REFERENCES apiary(id) ON DELETE CASCADE
 );
 
 CREATE TABLE analyse (
@@ -40,10 +40,10 @@ CREATE TABLE analyse (
     varroa_count INT,
     ruche_id_fk INT NOT NULL,
     notes TEXT,
-    FOREIGN KEY (ruche_id_fk) REFERENCES ruche(id) ON DELETE CASCADE
+    FOREIGN KEY (ruche_id_fk) REFERENCES hive(id) ON DELETE CASCADE
 );
 
 -- Index pour améliorer les performances
 CREATE INDEX idx_user_email ON user(email);
-CREATE INDEX idx_ruche_rucher ON ruche(rucher_id_fk);
-CREATE INDEX idx_analyse_ruche ON analyse(ruche_id_fk);
+CREATE INDEX idx_ruche_rucher ON hive(apiary_id_fk);
+CREATE INDEX idx_analyse_ruche ON analysis(hive_id_fk);

@@ -7,6 +7,7 @@
       volumes:
         - ./backend:/app
         - ./backend/storage:/app/storage
+        - pip_cache:/root/.cache/pip
       environment:
         - MYSQL_HOST=db
         - MYSQL_USER=apitrini
@@ -69,5 +70,7 @@
       name: apitrini-network
 
   volumes:
+    pip_cache:
+      driver: local
     mariadb_data:
       driver: local

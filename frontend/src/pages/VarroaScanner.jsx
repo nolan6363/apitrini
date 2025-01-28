@@ -1,6 +1,6 @@
 import React, { useState, useEffect} from 'react';
-import ImageUploader from '@/components/features/image/ImageUploader';
-import ImageDisplay from '@/components/features/image/ImageDisplay';
+import ImageUploader from '@/components/features/image/ImageUploader.jsx';
+import ImageDisplay from '@/components/features/image/ImageDisplay.jsx';
 
 function VarroaScanner() {
     const [selectedImage, setSelectedImage] = useState(null);
