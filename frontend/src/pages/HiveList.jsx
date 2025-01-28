@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {useNavigate, useParams} from 'react-router-dom';
+import SearchBar from "@/components/ui/SearchBar.jsx";
 import {API_URL} from "@/config/api.js";
 
 const HiveCard = ({hive}) => {

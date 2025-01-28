@@ -1,12 +1,12 @@
-import React, {useEffect, useState} from "react";
-import {useNavigate} from 'react-router-dom';
-import {API_URL} from "@/config/api.js";
+import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from 'react-router-dom';
+import { API_URL } from "@/config/api.js";
+import SearchBar from "@/components/ui/SearchBar.jsx";
 
-const ApiaryCard = ({apiary}) => {
+const ApiaryCard = ({ apiary }) => {
     const navigate = useNavigate();
-
     const handleClick = () => {
-        navigate(`/hives/${apiary.id}`);  // ou le chemin que vous souhaitez
+        navigate(`/hives/${apiary.id}`);
     };
 
     return (
@@ -24,55 +24,71 @@ function ApiaryList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        fetchApiaryData();
-    }, []);
+    // États pour les filtres
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortOption, setSortOption] = useState('name');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
 
-    const fetchApiaryData = async () => {
+    const fetchApiaryData = async (search = '', sort = 'name') => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-
-            if (!token) {
-                throw new Error('Non authentifié');
-            }
-
             const response = await fetch(`${API_URL}/api/hives/get_apiary_list`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    search: search,
+                    sort: sort
+                })
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error('Erreur lors de la récupération des ruchers');
             }
 
             const data = await response.json();
             setApiaries(data);
         } catch (err) {
             setError(err.message);
-            if (err.message === 'Non authentifié') {
-                // Rediriger vers la page de connexion
-                window.location.href = '/login';
-            }
         } finally {
             setLoading(false);
         }
-    }
+    };
 
-    if (loading) {
-        return <div className="p-4">Chargement...</div>;
-    }
+    // Effet pour le debounce de la recherche
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+        }, 300); // Attend 300ms après la dernière frappe
 
-    if (error) {
-        return <div className="p-4 text-red-500">Erreur: {error}</div>;
-    }
+        return () => {
+            clearTimeout(timeoutId);
+        };
+    }, [searchTerm]);
+
+    // Effet pour faire la requête API
+    useEffect(() => {
+        fetchApiaryData(debouncedSearch, sortOption);
+    }, [debouncedSearch, sortOption]); // Utilise debouncedSearch au lieu de searchTerm
+
+    const handleSearch = (value) => {
+        setSearchTerm(value);
+    };
+
+    const handleSort = (option) => {
+        setSortOption(option);
+    };
+
+    if (loading && !apiaries.length) return <div className="p-4">Chargement des ruchers...</div>;
+    if (error) return <div className="text-red-500 p-4">{error}</div>;
 
     return (
         <div className="p-4">
-            <h1 className="text-2xl font-bold mb-4">Mes Ruchers</h1>
+            <h1 className="text-2xl font-bold mb-4 m-1">Mes Ruchers</h1>
+            <SearchBar onSearch={handleSearch} onSort={handleSort} />
             <div className="flex flex-wrap mt-4">
                 {apiaries.length > 0 ? (
                     apiaries.map((apiary) => (

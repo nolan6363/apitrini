@@ -1,6 +1,5 @@
 FROM node:18-alpine
 
-# Nous gardons /frontend comme répertoire de travail puisque ça fonctionne
 WORKDIR /frontend
 
 # Installation de dépendances système qui peuvent aider avec le file watching
