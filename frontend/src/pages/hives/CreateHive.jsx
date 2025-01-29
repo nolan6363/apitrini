@@ -92,7 +92,7 @@ function CreateHive() {
             }
 
             // Redirection vers la liste des ruches du rucher
-            navigate(`/hives/${apiaryId}`);
+            navigate(`/apiary/${apiaryId}`);
 
         } catch (err) {
             setError(err.message);

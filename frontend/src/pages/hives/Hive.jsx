@@ -305,7 +305,7 @@ const Hive = () => {
         <div className="container mx-auto px-4 py-8 max-w-4xl">
             <div className="flex justify-between items-center mb-6">
                 <button
-                    onClick={() => navigate(`/hives/${hive.apiaryId}`)}
+                    onClick={() => navigate(`/apiary/${hive.apiaryId}`)}
                     className="text-blue-500 hover:text-blue-700 flex items-center"
                 >
                     ← Retour au rucher {hive.apiaryName}

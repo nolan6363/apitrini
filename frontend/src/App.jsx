@@ -7,7 +7,7 @@ import VarroaScanner from "@/pages/VarroaScanner.jsx";
 import Register from "@/pages/Register";
 import ApiaryList from "@/pages/apiary/ApiaryList.jsx";
 import CheckAuth from "@/components/features/auth/CheckAuth";
-import HiveList from "@/pages/hives/HiveList.jsx";
+import Apiary from "@/pages/hives/Apiary.jsx";
 import CreateApiary from "@/pages/apiary/CreateApiary.jsx";
 import CreateHive from "@/pages/hives/CreateHive.jsx";
 import Hive from "@/pages/hives/Hive.jsx";
@@ -21,7 +21,7 @@ function App() {
     return (
         <AuthProvider>
             <Router>
-                <div className="min-h-screen bg-gray-50">
+                <div className="min-h-screen bg-gray-200">
                     <HomeBar/>
                     <Routes>
                         <Route path="/" element={<Home/>}/>
@@ -31,8 +31,8 @@ function App() {
                         <Route path="/statistics" element={<Stats/>}/>
                         <Route path="/ressources" element={<Resources/>}/>
                         <Route path="/register" element={<Register/>}/>
-                        <Route path="/hives/add/:apiaryId" element={<CreateHive />}/>
-                        <Route path="/hives/:apiaryId" element={<HiveList />} />
+                        <Route path="/apiary/:apiaryId/add/" element={<CreateHive />}/>
+                        <Route path="/apiary/:apiaryId" element={<Apiary />} />
                         <Route path="/hive/:hiveId" element={<Hive />} />
                         <Route path="/apiaries/add" element={<CreateApiary />} />
                     </Routes>

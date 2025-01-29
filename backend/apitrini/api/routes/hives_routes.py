@@ -35,7 +35,8 @@ def get_apiary_list():
                 apiary.name,
                 apiary.location,
                 COUNT(DISTINCT hive.id) as hive_count,
-                apiary.created_at
+                apiary.created_at,
+                apiary.description
             FROM apiary 
             INNER JOIN relations_user_apiary ON relations_user_apiary.apiary_id_fk = apiary.id
             LEFT JOIN hive ON hive.apiary_id_fk = apiary.id
@@ -57,7 +58,8 @@ def get_apiary_list():
             'name': apiary[1],
             'localisation': apiary[2],
             'hiveNumber': apiary[3],
-            'createdAt': apiary[4].isoformat() if apiary[4] else None
+            'createdAt': apiary[4].isoformat() if apiary[4] else None,
+            'description': apiary[5]
         } for apiary in apiaries]
 
         return jsonify(formatted_apiaries), 200
@@ -86,7 +88,8 @@ def get_apiary_info():
                 apiary.id,
                 apiary.name,
                 apiary.location,
-                COUNT(DISTINCT hive.id) as hive_count
+                COUNT(DISTINCT hive.id) as hive_count,
+                apiary.description
             FROM apiary 
             INNER JOIN relations_user_apiary ON relations_user_apiary.apiary_id_fk = apiary.id
             LEFT JOIN hive ON hive.apiary_id_fk = apiary.id
@@ -112,7 +115,8 @@ def get_apiary_info():
             'id': result[0],
             'name': result[1],
             'location': result[2],
-            'hiveCount': result[3]
+            'hiveCount': result[3],
+            'description': result[4]
         }), 200
 
     except Exception as e:
@@ -122,9 +126,9 @@ def get_apiary_info():
         }), 500
 
 
-@hives_bp.route('/get_hive_list', methods=['POST'])
+@hives_bp.route('/get_apiary_data', methods=['POST'])
 @token_required
-def get_hive_list():
+def get_apiary_data():
     try:
         user_id = request.user_id
         data = request.get_json()
@@ -313,6 +317,7 @@ def create_apiary():
 
         name = data.get('name', '').strip()
         location = data.get('location', '').strip()
+        description = data.get('description', '').strip()
 
         # Validation des données
         if not name or len(name) < 2:
@@ -350,13 +355,14 @@ def create_apiary():
         try:
             # Insertion du rucher avec RETURNING si votre version de MySQL le supporte
             insert_query = """
-                INSERT INTO apiary (name, location, created_at) 
-                VALUES (%(name)s, %(location)s, NOW())
+                INSERT INTO apiary (name, location, created_at, description) 
+                VALUES (%(name)s, %(location)s, NOW(), %(description)s)
             """
 
             cur.execute(insert_query, {
                 'name': name,
-                'location': location
+                'location': location,
+                'description': description
             })
 
             apiary_id = cur.lastrowid
@@ -379,7 +385,8 @@ def create_apiary():
                 'apiary': {
                     'id': apiary_id,
                     'name': name,
-                    'location': location
+                    'location': location,
+                    'description': description
                 }
             }), 201
 

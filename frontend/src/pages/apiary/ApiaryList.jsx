@@ -13,7 +13,7 @@ const ApiaryCard = ({ apiary, onDelete }) => {
     const handleCardClick = (e) => {
         // Empêcher la navigation si on clique sur le bouton de suppression
         if (e.target.closest('.delete-button')) return;
-        navigate(`/hives/${apiary.id}`);
+        navigate(`/apiary/${apiary.id}`);
     };
 
     const handleDelete = async () => {
@@ -48,7 +48,7 @@ const ApiaryCard = ({ apiary, onDelete }) => {
     return (
         <>
             <div
-                className="w-64 h-40 border-2 m-1 p-4 border-blue-500 rounded-lg hover:shadow-lg transition-shadow cursor-pointer relative"
+                className="w-64 h-40 m-2 p-4 bg-white rounded-lg hover:shadow-lg transition-shadow cursor-pointer relative"
                 onClick={handleCardClick}
             >
                 <button
