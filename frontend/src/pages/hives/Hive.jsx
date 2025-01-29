@@ -4,6 +4,15 @@ import {PencilIcon, Save, X, Plus, ChevronDown, ExternalLink} from 'lucide-react
 import {API_URL} from "@/config/api.js";
 
 const HiveHeader = ({hive, isEditing, onEdit, onSave, onCancel, onChange}) => {
+    const handleSave = () => {
+        // On n'envoie que les champs nécessaires
+        const updateData = {
+            name: hive.name,
+            description: hive.description
+        };
+        onSave(updateData);
+    };
+
     if (isEditing) {
         return (
             <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
@@ -13,7 +22,7 @@ const HiveHeader = ({hive, isEditing, onEdit, onSave, onCancel, onChange}) => {
                         <input
                             type="text"
                             name="name"
-                            value={hive.name}
+                            value={hive.name || ''}
                             onChange={onChange}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         />
@@ -37,7 +46,7 @@ const HiveHeader = ({hive, isEditing, onEdit, onSave, onCancel, onChange}) => {
                             Annuler
                         </button>
                         <button
-                            onClick={onSave}
+                            onClick={handleSave}
                             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center"
                         >
                             <Save size={16} className="mr-2"/>

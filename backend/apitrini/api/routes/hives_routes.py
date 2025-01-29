@@ -495,6 +495,67 @@ def create_hive():
         }), 500
 
 
+@hives_bp.route('/update_hive', methods=['POST'])
+@token_required
+def update_hive():
+    try:
+        user_id = request.user_id
+        data = request.get_json()
+
+        if not data or not data.get('hiveId'):
+            return jsonify({'error': 'ID de ruche non fourni'}), 400
+
+        hive_id = data.get('hiveId')
+        name = data.get('name')
+        description = data.get('description')
+
+        # Vérifier que l'utilisateur a accès à cette ruche
+        cur = mysql.connection.cursor()
+        check_query = """
+            SELECT 1 FROM hive h
+            INNER JOIN apiary a ON a.id = h.apiary_id_fk
+            INNER JOIN relations_user_apiary rua ON rua.apiary_id_fk = a.id
+            WHERE h.id = %(hive_id)s AND rua.user_id_fk = %(user_id)s
+        """
+
+        cur.execute(check_query, {
+            'hive_id': hive_id,
+            'user_id': user_id
+        })
+
+        if not cur.fetchone():
+            cur.close()
+            return jsonify({
+                'error': 'Ruche non trouvée ou accès non autorisé'
+            }), 403
+
+        # Mise à jour de la ruche
+        update_query = """
+            UPDATE hive 
+            SET name = %(name)s, description = %(description)s
+            WHERE id = %(hive_id)s
+        """
+
+        cur.execute(update_query, {
+            'name': name,
+            'description': description,
+            'hive_id': hive_id
+        })
+
+        mysql.connection.commit()
+        cur.close()
+
+        return jsonify({
+            'message': 'Ruche mise à jour avec succès'
+        }), 200
+
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour de la ruche: {str(e)}")
+        return jsonify({
+            'error': 'Une erreur est survenue lors de la mise à jour de la ruche'
+        }), 500
+
+
 @hives_bp.route('/delete_apiary', methods=['POST'])
 @token_required
 def delete_apiary():
