@@ -239,6 +239,7 @@ def get_hive_info():
                 hive.id,
                 hive.name, 
                 hive.created_at, 
+                hive.description,
                 apiary.id as apiary_id, 
                 apiary.name as apiary_name,
                 analysis.id as analysis_id,
@@ -271,19 +272,20 @@ def get_hive_info():
             'id': results[0][0],
             'name': results[0][1],
             'createdAt': results[0][2].isoformat() if results[0][2] else None,
-            'apiaryId': results[0][3],
-            'apiaryName': results[0][4],
+            'description': results[0][3],
+            'apiaryId': results[0][4],
+            'apiaryName': results[0][5],
             'analyses': []
         }
 
         # On ajoute chaque analyse si elle existe
         for row in results:
-            if row[5]:  # Si l'ID de l'analyse n'est pas null
+            if row[6]:  # Si l'ID de l'analyse n'est pas null
                 analysis = {
-                    'id': row[5],
-                    'createdAt': row[6].isoformat() if row[6] else None,
-                    'varroaCount': row[7],
-                    'picturePath': row[8]
+                    'id': row[6],
+                    'createdAt': row[7].isoformat() if row[7] else None,
+                    'varroaCount': row[8],
+                    'picturePath': row[9]
                 }
                 hive_data['analyses'].append(analysis)
 
@@ -690,4 +692,66 @@ def delete_hive():
         print(f"Erreur lors de la suppression de la ruche: {str(e)}")
         return jsonify({
             'error': 'Une erreur est survenue lors de la suppression de la ruche'
+        }), 500
+
+
+@hives_bp.route('/delete_analysis', methods=['POST'])
+@token_required
+def delete_analysis():
+    try:
+        user_id = request.user_id
+        data = request.get_json()
+
+        if not user_id:
+            return jsonify({'error': 'Utilisateur non trouvé'}), 404
+
+        if not data:
+            return jsonify({'error': 'Données non fournies'}), 400
+
+        analysis_id = data.get('analysisId')
+
+        cur = mysql.connection.cursor()
+
+        # Vérifier que l'utilisateur a accès à cette analyse
+        check_query = """
+            SELECT 1 FROM analysis
+            INNER JOIN hive ON hive.id = analysis.hive_id_fk
+            INNER JOIN apiary ON apiary.id = hive.apiary_id_fk
+            INNER JOIN relations_user_apiary rua ON rua.apiary_id_fk = apiary.id
+            WHERE analysis.id = %(analysis_id)s AND rua.user_id_fk = %(user_id)s
+        """
+
+        cur.execute(check_query, {
+            'analysis_id': analysis_id,
+            'user_id': user_id
+        })
+
+        if not cur.fetchone():
+            cur.close()
+            return jsonify({
+                'error': 'Analyse non trouvée ou accès non autorisé'
+            }), 403
+
+        try:
+            # Supprimer l'analyse
+            delete_query = "DELETE FROM analysis WHERE id = %(analysis_id)s"
+            cur.execute(delete_query, {'analysis_id': analysis_id})
+
+            mysql.connection.commit()
+
+            return jsonify({
+                'message': 'Analyse supprimée avec succès'
+            }), 200
+
+        except Exception as e:
+            mysql.connection.rollback()
+            raise e
+
+        finally:
+            cur.close()
+
+    except Exception as e:
+        print(f"Erreur lors de la suppression de l'analyse: {str(e)}")
+        return jsonify({
+            'error': 'Une erreur est survenue lors de la suppression de l\'analyse'
         }), 500

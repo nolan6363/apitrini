@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react";
 import {isRouteErrorResponse, useNavigate, useParams} from "react-router-dom";
 import {PencilIcon, Save, X, Plus, ChevronDown, ExternalLink} from 'lucide-react';
 import {API_URL} from "@/config/api.js";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal.jsx";
 
 const HiveHeader = ({hive, isEditing, onEdit, onSave, onCancel, onChange}) => {
     const handleSave = () => {
@@ -74,9 +75,11 @@ const HiveHeader = ({hive, isEditing, onEdit, onSave, onCancel, onChange}) => {
     );
 };
 
-const Analysis = ({ analysis, onDelete, onEdit }) => {
+const Analysis = ({analysis, onDelete, onEdit}) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [imageError, setImageError] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -89,83 +92,86 @@ const Analysis = ({ analysis, onDelete, onEdit }) => {
     };
 
     return (
-        <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                    <button
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="flex items-center text-gray-900 font-medium"
-                    >
-                        <ChevronDown
-                            size={20}
-                            className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                        />
-                        <span className="ml-2">{formatDate(analysis.createdAt)}</span>
-                    </button>
-                    <span className={`px-2 py-1 rounded-full text-sm ${
-                        analysis.varroaCount <= 10 ? 'bg-green-200 text-green-800' :
-                        analysis.varroaCount <= 100 ? 'bg-yellow-200 text-yellow-800' :
-                        'bg-red-200 text-red-800'
-                    }`}>
+        <>
+            <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                        <button
+                            onClick={() => setIsExpanded(!isExpanded)}
+                            className="flex items-center text-gray-900 font-medium"
+                        >
+                            <ChevronDown
+                                size={20}
+                                className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                            />
+                            <span className="ml-2">{formatDate(analysis.createdAt)}</span>
+                        </button>
+                        <span className={`px-2 py-1 rounded-full text-sm ${
+                            analysis.varroaCount <= 10 ? 'bg-green-200 text-green-800' :
+                                analysis.varroaCount <= 100 ? 'bg-yellow-200 text-yellow-800' :
+                                    'bg-red-200 text-red-800'
+                        }`}>
                         {analysis.varroaCount} Varroas
                     </span>
+                    </div>
+                    <div className="flex space-x-2">
+                        <button
+                            onClick={() => onDelete(analysis.id)}
+                            className="p-2 text-red-400 hover:text-red-600"
+                        >
+                            <X size={16}/>
+                        </button>
+                    </div>
                 </div>
-                <div className="flex space-x-2">
-                    <button
-                        onClick={() => onEdit(analysis)}
-                        className="p-2 text-gray-400 hover:text-gray-600"
-                    >
-                        <PencilIcon size={16} />
-                    </button>
-                    <button
-                        onClick={() => onDelete(analysis.id)}
-                        className="p-2 text-red-400 hover:text-red-600"
-                    >
-                        <X size={16} />
-                    </button>
-                </div>
-            </div>
-            {isExpanded && (
-                <div className="mt-4 pl-8">
-                    <div className="flex flex-col">
-                        {analysis.picturePath && !imageError && (
-                            <div className="relative">
-                                <img
-                                    src={`${API_URL}/api/images/get/${analysis.picturePath}`}
-                                    alt="Analyse de la ruche"
-                                    className="rounded-lg max-w-full h-auto max-h-96 object-cover"
-                                    onError={() => setImageError(true)}
-                                />
-                                <a
-                                    href={`${API_URL}/api/images/get/${analysis.picturePath}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
-                                >
-                                    <ExternalLink size={16} />
-                                </a>
-                            </div>
-                        )}
-                        {imageError && (
-                            <div className="text-red-500 text-sm mt-2">
-                                Erreur lors du chargement de l'image
+                {isExpanded && (
+                    <div className="mt-4 pl-8">
+                        <div className="flex flex-col">
+                            {analysis.picturePath && !imageError && (
+                                <div className="relative">
+                                    <img
+                                        src={`${API_URL}/api/images/get/${analysis.picturePath}`}
+                                        alt="Analyse de la ruche"
+                                        className="rounded-lg max-w-full h-auto max-h-96 object-cover"
+                                        onError={() => setImageError(true)}
+                                    />
+                                    <a
+                                        href={`${API_URL}/api/images/get/${analysis.picturePath}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+                                    >
+                                        <ExternalLink size={16}/>
+                                    </a>
+                                </div>
+                            )}
+                            {imageError && (
+                                <div className="text-red-500 text-sm mt-2">
+                                    Erreur lors du chargement de l'image
+                                </div>
+                            )}
+                        </div>
+                        {analysis.notes && (
+                            <div className="mt-4">
+                                <h3 className="text-gray-700 font-medium mb-2">Notes</h3>
+                                <p className="text-gray-600">{analysis.notes}</p>
                             </div>
                         )}
                     </div>
-                    {analysis.notes && (
-                        <div className="mt-4">
-                            <h3 className="text-gray-700 font-medium mb-2">Notes</h3>
-                            <p className="text-gray-600">{analysis.notes}</p>
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
+                )}
+            </div>
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={onDelete}
+                title="Supprimer le rucher ?"
+                message={`Êtes-vous sûr de vouloir supprimer l'analyse du "${formatDate(analysis.createdAt)}" ? Cette action ne peut pas être annulée.`}
+            />
+        </>
     );
 };
 
 const Hive = () => {
-    const { hiveId } = useParams();
+    const {hiveId} = useParams();
     const navigate = useNavigate();
     const [hive, setHive] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -185,7 +191,7 @@ const Hive = () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ hiveId })
+                body: JSON.stringify({hiveId})
             });
 
             if (!response.ok) {
@@ -203,6 +209,7 @@ const Hive = () => {
                 createdAt: data.createdAt,
                 apiaryId: data.apiaryId,
                 apiaryName: data.apiaryName,
+                description: data.description,
                 analyses: data.analyses || []
             });
 
@@ -258,7 +265,7 @@ const Hive = () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ analysisId })
+                body: JSON.stringify({analysisId})
             });
 
             if (!response.ok) {
@@ -312,7 +319,7 @@ const Hive = () => {
                 onSave={handleHiveUpdate}
                 onCancel={() => setIsEditing(false)}
                 onChange={(e) => {
-                    const { name, value } = e.target;
+                    const {name, value} = e.target;
                     setHive(prev => ({
                         ...prev,
                         [name]: value

@@ -44,10 +44,14 @@ const HiveCard = ({hive, onDelete}) => {
     return (<>
         <div
             onClick={handleCardClick}
-            className="w-64 h-40 border-2 m-1 p-4 border-blue-500 rounded-lg hover:shadow-lg transition-shadow relative">
+            className="w-64 h-40 border-2 m-1 p-4 border-blue-500 rounded-lg hover:shadow-lg transition-shadow relative"
+        >
             <button
                 className="absolute top-2 right-2 p-2 rounded-full hover:bg-red-100 text-red-500"
-                onClick={() => setShowDeleteModal(true)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeleteModal(true);
+                }}
             >
                 <Trash2 size={20}/>
             </button>
@@ -168,51 +172,53 @@ const HiveList = () => {
         </div>);
     }
 
-    return (<div className="p-4">
-        <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center">
-                <button
-                    onClick={() => navigate('/apiaries')}
-                    className="mr-4 text-blue-500 hover:text-blue-700 flex items-center"
-                >
-                    <span className="mr-2">←</span>
-                    Retour aux ruchers
-                </button>
-                <h1 className="text-2xl font-bold">
-                    {apiaryData.apiary?.name}
-                    <span className="text-gray-500 text-lg ml-2">
+    return (
+        <div className="p-4">
+            <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center">
+                    <button
+                        onClick={() => navigate('/apiaries')}
+                        className="mr-4 text-blue-500 hover:text-blue-700 flex items-center"
+                    >
+                        <span className="mr-2">←</span>
+                        Retour aux ruchers
+                    </button>
+                    <h1 className="text-2xl font-bold">
+                        {apiaryData.apiary?.name}
+                        <span className="text-gray-500 text-lg ml-2">
                         ({apiaryData.hives.length} ruches)
                     </span>
-                </h1>
+                    </h1>
+                </div>
+                <button
+                    onClick={() => navigate(`/hives/add/${apiaryId}`)}
+                    className="px-4 py-2 h-10 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                >
+                    Ajouter une ruche
+                </button>
             </div>
-            <button
-                onClick={() => navigate(`/hives/add/${apiaryId}`)}
-                className="px-4 py-2 h-10 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-            >
-                Ajouter une ruche
-            </button>
-        </div>
 
-        <SearchBar
-            onSearch={handleSearch}
-            onSort={handleSort}
-            currentSort={sortOption}
-            searchPlaceholder="Filtrer les ruches..."
-            sortOptions={[{value: 'name', label: 'Nom'}, {value: 'date', label: 'Date'}]}
-        />
+            <SearchBar
+                onSearch={handleSearch}
+                onSort={handleSort}
+                currentSort={sortOption}
+                searchPlaceholder="Filtrer les ruches..."
+                sortOptions={[{value: 'name', label: 'Nom'}, {value: 'date', label: 'Date'}]}
+            />
 
-        <div className="flex flex-wrap mt-4">
-            {apiaryData.hives.length > 0 ? (apiaryData.hives.map((hive) => (<HiveCard
-                key={hive.id}
-                hive={hive}
-                onDelete={(hiveId) => {
-                    setApiaryData({
-                        ...apiaryData, hives: apiaryData.hives.filter((h) => h.id !== hiveId)
-                    });
-                }}
-            />))) : (<p className="text-gray-500">Aucune ruche trouvée</p>)}
+            <div className="flex flex-wrap mt-4">
+                {apiaryData.hives.length > 0 ? (apiaryData.hives.map((hive) => (<HiveCard
+                    key={hive.id}
+                    hive={hive}
+                    onDelete={(hiveId) => {
+                        setApiaryData({
+                            ...apiaryData, hives: apiaryData.hives.filter((h) => h.id !== hiveId)
+                        });
+                    }}
+                />))) : (<p className="text-gray-500">Aucune ruche trouvée</p>)}
+            </div>
         </div>
-    </div>);
+    );
 }
 
 export default HiveList;
