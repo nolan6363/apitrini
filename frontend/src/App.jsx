@@ -10,6 +10,7 @@ import CheckAuth from "@/components/features/auth/CheckAuth";
 import HiveList from "@/pages/hives/HiveList.jsx";
 import CreateApiary from "@/pages/apiary/CreateApiary.jsx";
 import CreateHive from "@/pages/hives/CreateHive.jsx";
+import Hive from "@/pages/hives/Hive.jsx";
 
 // Pages temporaires
 const Home = () => <div className="p-4">Page d'accueil</div>;
@@ -32,6 +33,7 @@ function App() {
                         <Route path="/register" element={<Register/>}/>
                         <Route path="/hives/add/:apiaryId" element={<CreateHive />}/>
                         <Route path="/hives/:apiaryId" element={<HiveList />} />
+                        <Route path="/hive/:hiveId" element={<Hive />} />
                         <Route path="/apiaries/add" element={<CreateApiary />} />
                     </Routes>
                     {/*<CheckAuth/>*/}

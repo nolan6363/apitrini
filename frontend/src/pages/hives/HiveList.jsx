@@ -8,6 +8,13 @@ import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal.jsx
 const HiveCard = ({hive, onDelete}) => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+
+    const handleCardClick = (e) => {
+        // Empêcher la navigation si on clique sur le bouton de suppression
+        if (e.target.closest('.delete-button')) return;
+        navigate(`/hive/${hive.id}`);
+    };
 
     const handleDelete = async () => {
         try {
@@ -36,6 +43,7 @@ const HiveCard = ({hive, onDelete}) => {
 
     return (<>
         <div
+            onClick={handleCardClick}
             className="w-64 h-40 border-2 m-1 p-4 border-blue-500 rounded-lg hover:shadow-lg transition-shadow relative">
             <button
                 className="absolute top-2 right-2 p-2 rounded-full hover:bg-red-100 text-red-500"

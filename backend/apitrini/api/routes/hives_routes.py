@@ -217,6 +217,85 @@ def get_hive_list():
         return jsonify({'error': 'Erreur dans la récupération des ruches'}), 500
 
 
+@hives_bp.route('/get_hive_info', methods=['POST'])
+@token_required
+def get_hive_info():
+    try:
+        user_id = request.user_id
+        data = request.get_json()
+
+        if not user_id:
+            return jsonify({'error': 'Utilisateur non trouvé'}), 404
+
+        if not data or not data.get('hiveId'):
+            return jsonify({'error': 'ID de ruche non fourni'}), 400
+
+        hive_id = data.get('hiveId')
+
+        cur = mysql.connection.cursor()
+
+        query = """
+            SELECT 
+                hive.id,
+                hive.name, 
+                hive.created_at, 
+                apiary.id as apiary_id, 
+                apiary.name as apiary_name,
+                analysis.id as analysis_id,
+                analysis.created_at as analysis_date,
+                analysis.varroa_count,
+                analysis.picture_path
+            FROM hive
+            INNER JOIN apiary ON apiary.id = hive.apiary_id_fk
+            INNER JOIN relations_user_apiary ON relations_user_apiary.apiary_id_fk = apiary.id
+            LEFT JOIN analysis ON hive.id = analysis.hive_id_fk
+            WHERE hive.id = %(hive_id)s AND relations_user_apiary.user_id_fk = %(user_id)s
+            ORDER BY analysis.created_at DESC
+        """
+
+        cur.execute(query, {
+            'hive_id': hive_id,
+            'user_id': user_id
+        })
+
+        results = cur.fetchall()  # On récupère tous les résultats, pas juste le premier
+        cur.close()
+
+        if not results:
+            return jsonify({
+                'error': 'Ruche non trouvée ou accès non autorisé'
+            }), 404
+
+        # Les informations de base de la ruche sont les mêmes pour toutes les lignes
+        hive_data = {
+            'id': results[0][0],
+            'name': results[0][1],
+            'createdAt': results[0][2].isoformat() if results[0][2] else None,
+            'apiaryId': results[0][3],
+            'apiaryName': results[0][4],
+            'analyses': []
+        }
+
+        # On ajoute chaque analyse si elle existe
+        for row in results:
+            if row[5]:  # Si l'ID de l'analyse n'est pas null
+                analysis = {
+                    'id': row[5],
+                    'createdAt': row[6].isoformat() if row[6] else None,
+                    'varroaCount': row[7],
+                    'picturePath': row[8]
+                }
+                hive_data['analyses'].append(analysis)
+
+        return jsonify(hive_data), 200
+
+    except Exception as e:
+        print(f"Erreur lors de la récupération des informations de la ruche: {str(e)}")
+        return jsonify({
+            'error': 'Une erreur est survenue lors de la récupération des informations de la ruche'
+        }), 500
+
+
 @hives_bp.route('/create_apiary', methods=['POST'])
 @token_required
 def create_apiary():
