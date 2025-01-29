@@ -1,23 +1,82 @@
 import React, {useEffect, useState} from "react";
 import {useNavigate} from 'react-router-dom';
 import {API_URL} from "@/config/api.js";
+import { Trash2 } from 'lucide-react';
 import SearchBar from "@/components/ui/SearchBar.jsx";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal.jsx";
 
-const ApiaryCard = ({apiary}) => {
+const ApiaryCard = ({ apiary, onDelete }) => {
     const navigate = useNavigate();
-    const handleClick = () => {
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleCardClick = (e) => {
+        // Empêcher la navigation si on clique sur le bouton de suppression
+        if (e.target.closest('.delete-button')) return;
         navigate(`/hives/${apiary.id}`);
     };
 
+    const handleDelete = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+
+            const response = await fetch(`${API_URL}/api/hives/delete_apiary`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ apiaryId: apiary.id })
+            });
+
+            if (!response.ok) {
+                throw new Error('Erreur lors de la suppression du rucher');
+            }
+
+            onDelete(apiary.id);
+            setShowDeleteModal(false);
+
+        } catch (error) {
+            console.error('Erreur:', error);
+            // Vous pourriez vouloir gérer l'erreur différemment ici
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <div className="w-64 h-40 border-2 m-1 p-4 border-blue-500 rounded-lg hover:shadow-lg transition-shadow"
-             onClick={handleClick}>
-            <p className="font-bold text-lg mb-2">{apiary.name}</p>
-            <p className="text-gray-600">{apiary.localisation}</p>
-            <p className="mt-2">{apiary.hiveNumber} ruches</p>
-        </div>
+        <>
+            <div
+                className="w-64 h-40 border-2 m-1 p-4 border-blue-500 rounded-lg hover:shadow-lg transition-shadow cursor-pointer relative"
+                onClick={handleCardClick}
+            >
+                <button
+                    className="delete-button absolute top-2 right-2 p-2 rounded-full hover:bg-red-100 text-red-500"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setShowDeleteModal(true);
+                    }}
+                >
+                    <Trash2 size={20} />
+                </button>
+
+                <p className="font-bold text-lg mb-2">{apiary.name}</p>
+                <p className="text-gray-600">{apiary.localisation}</p>
+                <p className="mt-2">{apiary.hiveNumber} ruches</p>
+            </div>
+
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleDelete}
+                loading={loading}
+                title="Supprimer le rucher ?"
+                message={`Êtes-vous sûr de vouloir supprimer le rucher "${apiary.name}" ? Cette action supprimera également toutes les ruches associées et ne peut pas être annulée.`}
+            />
+        </>
     );
-}
+};
 
 function ApiaryList() {
     const [apiaries, setApiaries] = useState([]);
@@ -143,6 +202,9 @@ function ApiaryList() {
                         <ApiaryCard
                             key={apiary.id}
                             apiary={apiary}
+                            onDelete={(apiaryId) => {
+                                setApiaries(apiaries.filter((a) => a.id !== apiaryId));
+                            }}
                         />
                     ))
                 ) : (

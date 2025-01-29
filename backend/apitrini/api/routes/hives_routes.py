@@ -414,3 +414,140 @@ def create_hive():
         return jsonify({
             'error': 'Une erreur est survenue lors de la création de la ruche'
         }), 500
+
+
+@hives_bp.route('/delete_apiary', methods=['POST'])
+@token_required
+def delete_apiary():
+    try:
+        user_id = request.user_id
+        data = request.get_json()
+
+        if not data or not data.get('apiaryId'):
+            return jsonify({'error': 'ID de rucher non fourni'}), 400
+
+        apiary_id = data.get('apiaryId')
+
+        cur = mysql.connection.cursor()
+
+        # Vérifier que l'utilisateur a accès au rucher
+        check_query = """
+            SELECT 1 FROM relations_user_apiary
+            WHERE user_id_fk = %(user_id)s AND apiary_id_fk = %(apiary_id)s
+        """
+
+        cur.execute(check_query, {
+            'user_id': user_id,
+            'apiary_id': apiary_id
+        })
+
+        if not cur.fetchone():
+            cur.close()
+            return jsonify({
+                'error': 'Accès non autorisé à ce rucher'
+            }), 403
+
+        try:
+            # Supprimer la relation utilisateur-rucher
+            delete_relation_query = """
+                DELETE FROM relations_user_apiary 
+                WHERE apiary_id_fk = %(apiary_id)s 
+                AND user_id_fk = %(user_id)s
+            """
+            cur.execute(delete_relation_query, {
+                'apiary_id': apiary_id,
+                'user_id': user_id
+            })
+
+            # Vérifier s'il reste des relations pour ce rucher
+            check_relations_query = """
+                SELECT COUNT(*) FROM relations_user_apiary
+                WHERE apiary_id_fk = %(apiary_id)s
+            """
+            cur.execute(check_relations_query, {'apiary_id': apiary_id})
+            remaining_relations = cur.fetchone()[0]
+
+            # Si c'était le dernier utilisateur, supprimer le rucher et ses ruches
+            if remaining_relations == 0:
+                delete_hives_query = "DELETE FROM hive WHERE apiary_id_fk = %(apiary_id)s"
+                cur.execute(delete_hives_query, {'apiary_id': apiary_id})
+
+                delete_apiary_query = "DELETE FROM apiary WHERE id = %(apiary_id)s"
+                cur.execute(delete_apiary_query, {'apiary_id': apiary_id})
+
+            mysql.connection.commit()
+
+            return jsonify({
+                'message': 'Rucher supprimé avec succès'
+            }), 200
+
+        except Exception as e:
+            mysql.connection.rollback()
+            raise e
+
+        finally:
+            cur.close()
+
+    except Exception as e:
+        print(f"Erreur lors de la suppression du rucher: {str(e)}")
+        return jsonify({
+            'error': 'Une erreur est survenue lors de la suppression du rucher'
+        }), 500
+
+
+@hives_bp.route('/delete_hive', methods=['POST'])
+@token_required
+def delete_hive():
+    try:
+        user_id = request.user_id
+        data = request.get_json()
+
+        if not data or not data.get('hiveId'):
+            return jsonify({'error': 'ID de ruche non fourni'}), 400
+
+        hive_id = data.get('hiveId')
+
+        cur = mysql.connection.cursor()
+
+        # Vérifier que l'utilisateur a accès à la ruche via le rucher
+        check_query = """
+            SELECT 1 
+            FROM hive
+            INNER JOIN relations_user_apiary ON relations_user_apiary.apiary_id_fk = hive.apiary_id_fk
+            WHERE hive.id = %(hive_id)s AND relations_user_apiary.user_id_fk = %(user_id)s
+        """
+
+        cur.execute(check_query, {
+            'user_id': user_id,
+            'hive_id': hive_id
+        })
+
+        if not cur.fetchone():
+            cur.close()
+            return jsonify({
+                'error': 'Accès non autorisé à cette ruche'
+            }), 403
+
+        try:
+            # Supprimer la ruche
+            delete_query = "DELETE FROM hive WHERE id = %(hive_id)s"
+            cur.execute(delete_query, {'hive_id': hive_id})
+
+            mysql.connection.commit()
+
+            return jsonify({
+                'message': 'Ruche supprimée avec succès'
+            }), 200
+
+        except Exception as e:
+            mysql.connection.rollback()
+            raise e
+
+        finally:
+            cur.close()
+
+    except Exception as e:
+        print(f"Erreur lors de la suppression de la ruche: {str(e)}")
+        return jsonify({
+            'error': 'Une erreur est survenue lors de la suppression de la ruche'
+        }), 500
