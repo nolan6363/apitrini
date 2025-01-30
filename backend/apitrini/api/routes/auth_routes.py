@@ -35,6 +35,24 @@ def token_required(f):
     return decorated
 
 
+def optional_token(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        if not token:
+            request.user_id = None
+            return f(*args, **kwargs)
+        try:
+            token = token.split(" ")[1]  # Retirer "Bearer "
+            data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            request.user_id = data['user_id']
+        except:
+            request.user_id = None
+        return f(*args, **kwargs)
+
+    return decorated
+
+
 def validate_email(email):
     return bool(EMAIL_REGEX.match(email))
 

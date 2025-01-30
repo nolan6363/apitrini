@@ -185,7 +185,7 @@ const Hive = () => {
                 throw new Error('Veuillez vous connecter pour accéder à cette page');
             }
 
-            const response = await fetch(`${API_URL}/api/hives/get_hive_info`, {
+            const response = await fetch(`${API_URL}/api/hives/get_hive_data`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -331,7 +331,7 @@ const Hive = () => {
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold">Analyses</h2>
                     <button
-                        onClick={() => navigate(`/hives/${hiveId}/analysis/add`)}
+                        onClick={() => navigate(`/varroa/${hiveId}`)}
                         className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center"
                     >
                         <Plus size={16} className="mr-2"/>

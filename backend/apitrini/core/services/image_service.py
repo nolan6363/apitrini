@@ -1,4 +1,6 @@
+import os
 from apitrini.infrastructure.storage import StorageManager
+
 
 class ImageService:
     def __init__(self):

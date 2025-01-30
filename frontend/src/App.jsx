@@ -2,9 +2,9 @@ import React from "react";
 import {BrowserRouter as Router, Routes, Route} from "react-router-dom";
 import {AuthProvider} from '@/contexts/AuthContext';
 import HomeBar from "@/components/ui/HomeBar.jsx";
-import Login from "@/pages/Login";
+import Login from "@/pages/auth/Login.jsx";
 import VarroaScanner from "@/pages/VarroaScanner.jsx";
-import Register from "@/pages/Register";
+import Register from "@/pages/auth/Register.jsx";
 import ApiaryList from "@/pages/apiary/ApiaryList.jsx";
 import CheckAuth from "@/components/features/auth/CheckAuth";
 import Apiary from "@/pages/hives/Apiary.jsx";
@@ -28,6 +28,7 @@ function App() {
                         <Route path="/login" element={<Login/>}/>
                         <Route path="/apiaries" element={<ApiaryList/>}/>
                         <Route path="/varroa" element={<VarroaScanner/>}/>
+                        <Route path="/varroa/:hiveId" element={<VarroaScanner/>}/>
                         <Route path="/statistics" element={<Stats/>}/>
                         <Route path="/ressources" element={<Resources/>}/>
                         <Route path="/register" element={<Register/>}/>

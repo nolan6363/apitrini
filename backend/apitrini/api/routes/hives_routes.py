@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify
 from apitrini.api.routes.auth_routes import token_required
 from apitrini.core.infrastructure.db import mysql
-
 hives_bp = Blueprint('hives', __name__)
 
 
@@ -221,9 +220,9 @@ def get_apiary_data():
         return jsonify({'error': 'Erreur dans la récupération des ruches'}), 500
 
 
-@hives_bp.route('/get_hive_info', methods=['POST'])
+@hives_bp.route('/get_hive_data', methods=['POST'])
 @token_required
-def get_hive_info():
+def get_hive_data():
     try:
         user_id = request.user_id
         data = request.get_json()
@@ -294,6 +293,63 @@ def get_hive_info():
                 hive_data['analyses'].append(analysis)
 
         return jsonify(hive_data), 200
+
+    except Exception as e:
+        print(f"Erreur lors de la récupération des informations de la ruche: {str(e)}")
+        return jsonify({
+            'error': 'Une erreur est survenue lors de la récupération des informations de la ruche'
+        }), 500
+
+
+@hives_bp.route('/get_hive_info', methods=['POST'])
+@token_required
+def get_hive_info():
+    try:
+        user_id = request.user_id
+        data = request.get_json()
+
+        if not data or not data.get('hiveId'):
+            return jsonify({'error': 'ID de ruche non fourni'}), 400
+
+        hive_id = data.get('hiveId')
+
+        cur = mysql.connection.cursor()
+
+        query = """
+            SELECT
+                hive.id,
+                hive.name,
+                hive.created_at,
+                hive.description,
+                apiary.id as apiary_id,
+                apiary.name as apiary_name
+            FROM hive
+            INNER JOIN apiary ON apiary.id = hive.apiary_id_fk
+            INNER JOIN relations_user_apiary ON relations_user_apiary.apiary_id_fk = apiary.id
+            WHERE hive.id = %(hive_id)s AND relations_user_apiary.user_id_fk = %(user_id)s
+        """
+
+        cur.execute(query, {
+            'hive_id': hive_id,
+            'user_id': user_id
+        })
+
+        result = cur.fetchone()
+        cur.close()
+
+        if not result:
+            return jsonify({
+                'error': 'Ruche non trouvée ou accès non autorisé'
+            }), 404
+
+        return jsonify({
+            'id': result[0],
+            'name': result[1],
+            'createdAt': result[2].isoformat() if result[2] else None,
+            'description': result[3],
+            'apiaryId': result[4],
+            'apiaryName': result[5]
+        }), 200
 
     except Exception as e:
         print(f"Erreur lors de la récupération des informations de la ruche: {str(e)}")
