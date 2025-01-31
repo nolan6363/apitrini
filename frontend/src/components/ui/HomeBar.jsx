@@ -31,18 +31,18 @@ function HomeBar() {
                         <NavLink to="/" >
                             Accueil
                         </NavLink>
-                        <NavLink to="/apiaries">
-                            Mes Ruches
-                        </NavLink>
                         <NavLink to="/varroa">
                             Comptage Varroas
                         </NavLink>
-                        <NavLink to="/statistics">
+                        <NavLink to="/apiaries">
+                            Mes Ruches
+                        </NavLink>
+                        {/*<NavLink to="/statistics">
                             Mes analyses
                         </NavLink>
                         <NavLink to="/ressources">
                             Ressources
-                        </NavLink>
+                        </NavLink>*/}
                     </nav>
 
                     {/* Bouton de connexion */}

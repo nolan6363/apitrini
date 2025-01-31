@@ -157,7 +157,9 @@ def get_apiary_data():
                 hive.name,
                 hive.created_at,
                 hive.apiary_id_fk,
-                apiary.name as apiary_name
+                apiary.name as apiary_name,
+                apiary.location,
+                apiary.description
             FROM hive 
             INNER JOIN apiary ON apiary.id = hive.apiary_id_fk
             INNER JOIN relations_user_apiary ON relations_user_apiary.apiary_id_fk = apiary.id
@@ -205,6 +207,8 @@ def get_apiary_data():
         formatted_response = {
             'apiary_id': apiary_id,
             'apiary_name': hives[0][4],
+            'apiary_location': hives[0][5],
+            'apiary_description': hives[0][6],
             'hives': [{
                 'id': hive[0],
                 'name': hive[1],
@@ -557,6 +561,65 @@ def create_hive():
         print(f"Erreur lors de la création de la ruche: {str(e)}")
         return jsonify({
             'error': 'Une erreur est survenue lors de la création de la ruche'
+        }), 500
+
+
+@hives_bp.route('/update_apiary', methods=['POST'])
+@token_required
+def update_apiary():
+    try:
+        user_id = request.user_id
+        data = request.get_json()
+
+        if not data or not data.get('apiaryId'):
+            return jsonify({'error': 'ID de rucher non fourni'}), 400
+
+        apiary_id = data.get('apiaryId')
+        name = data.get('name')
+        location = data.get('location')
+        description = data.get('description')
+
+        # Vérifier que l'utilisateur a accès à ce rucher
+        cur = mysql.connection.cursor()
+        check_query = """
+            SELECT 1 FROM relations_user_apiary
+            WHERE user_id_fk = %(user_id)s AND apiary_id_fk = %(apiary_id)s
+        """
+
+        cur.execute(check_query, {
+            'user_id': user_id,
+            'apiary_id': apiary_id
+        })
+
+        if not cur.fetchone():
+            cur.close()
+            return jsonify({
+                'error': 'Rucher non trouvé ou accès non autorisé'
+            }), 403
+
+        # Mise à jour du rucher
+        update_query = """
+            UPDATE apiary
+            SET name = %(name)s, location = %(location)s, description = %(description)s
+            WHERE id = %(apiary_id)s
+        """
+
+        cur.execute(update_query, {
+            'name': name,
+            'location': location,
+            'description': description,
+            'apiary_id': apiary_id
+        })
+        mysql.connection.commit()
+
+        return jsonify({
+            'message': 'Rucher mis à jour avec succès'
+        }), 200
+
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour du rucher: {str(e)}")
+        return jsonify({
+            'error': 'Une erreur est survenue lors de la mise à jour du rucher'
         }), 500
 
 

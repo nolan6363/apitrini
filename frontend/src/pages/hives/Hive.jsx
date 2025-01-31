@@ -80,7 +80,6 @@ const Analysis = ({analysis, onDelete, onEdit}) => {
     const [imageError, setImageError] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('fr-FR', {
             year: 'numeric',
@@ -89,6 +88,11 @@ const Analysis = ({analysis, onDelete, onEdit}) => {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    const handleDelete = () => {
+        onDelete(analysis.id);
+        setShowDeleteModal(false);
     };
 
     return (
@@ -107,8 +111,8 @@ const Analysis = ({analysis, onDelete, onEdit}) => {
                             <span className="ml-2">{formatDate(analysis.createdAt)}</span>
                         </button>
                         <span className={`px-2 py-1 rounded-full text-sm ${
-                            analysis.varroaCount <= 10 ? 'bg-green-200 text-green-800' :
-                                analysis.varroaCount <= 100 ? 'bg-yellow-200 text-yellow-800' :
+                            analysis.varroaCount <= 100 ? 'bg-green-200 text-green-800' :
+                                analysis.varroaCount <= 500 ? 'bg-yellow-200 text-yellow-800' :
                                     'bg-red-200 text-red-800'
                         }`}>
                         {analysis.varroaCount} Varroas
@@ -116,7 +120,7 @@ const Analysis = ({analysis, onDelete, onEdit}) => {
                     </div>
                     <div className="flex space-x-2">
                         <button
-                            onClick={() => onDelete(analysis.id)}
+                            onClick={() => setShowDeleteModal(true)}
                             className="p-2 text-red-400 hover:text-red-600"
                         >
                             <X size={16}/>
@@ -162,8 +166,8 @@ const Analysis = ({analysis, onDelete, onEdit}) => {
             <DeleteConfirmationModal
                 isOpen={showDeleteModal}
                 onClose={() => setShowDeleteModal(false)}
-                onConfirm={onDelete}
-                title="Supprimer le rucher ?"
+                onConfirm={handleDelete}
+                title="Supprimer l'analyse ?"
                 message={`Êtes-vous sûr de vouloir supprimer l'analyse du "${formatDate(analysis.createdAt)}" ? Cette action ne peut pas être annulée.`}
             />
         </>

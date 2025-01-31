@@ -1,18 +1,50 @@
-import React, {useState, useEffect} from 'react';
-import ImageUploader from '@/components/features/image/ImageUploader.jsx';
-import ImageDisplay from '@/components/features/image/ImageDisplay.jsx';
-import {API_URL} from "@/config/api.js";
-import {useParams} from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from "react-router-dom";
+import { API_URL } from "@/config/api.js";
 
 function VarroaScanner() {
+    const navigate = useNavigate();
     const [selectedImage, setSelectedImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [processedImageUrl, setProcessedImageUrl] = useState(null);
     const [processing, setProcessing] = useState(false);
     const [results, setResults] = useState(null);
     const [error, setError] = useState(null);
-    const {hiveId} = useParams();
-    const [hive, setHive] = useState(null);
+    const { hiveId } = useParams();
+
+    const [apiaries, setApiaries] = useState([]);
+    const [hives, setHives] = useState([]);
+    const [selectedApiary, setSelectedApiary] = useState(null);
+    const [selectedHive, setSelectedHive] = useState(null);
+    const [analysisComplete, setAnalysisComplete] = useState(false);
+    const [currentHiveInfo, setCurrentHiveInfo] = useState(null);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+    // Gestionnaire pour prévenir la navigation si analyse non sauvegardée
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [hasUnsavedChanges]);
+
+    useEffect(() => {
+        fetchApiaries();
+        if (hiveId) {
+            fetchHiveInfo(hiveId);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (selectedApiary) {
+            fetchHives(selectedApiary);
+        }
+    }, [selectedApiary]);
 
     useEffect(() => {
         if (selectedImage) {
@@ -22,13 +54,90 @@ function VarroaScanner() {
         }
     }, [selectedImage]);
 
+    // Mise à jour de hasUnsavedChanges quand une analyse est complétée
     useEffect(() => {
-            if (hiveId) {
-                fetchHive();
-            }
-        },
-        [hiveId]
-    )
+        if (analysisComplete && !results?.saved) {
+            setHasUnsavedChanges(true);
+        } else {
+            setHasUnsavedChanges(false);
+        }
+    }, [analysisComplete, results?.saved]);
+
+    const resetAnalysis = () => {
+        setSelectedImage(null);
+        setPreviewUrl(null);
+        setProcessedImageUrl(null);
+        setResults(null);
+        setAnalysisComplete(false);
+        setHasUnsavedChanges(false);
+        setError(null);
+    };
+
+    const fetchApiaries = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/api/hives/get_apiary_list`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    sort: 'name',
+                    search: ''
+                })
+            });
+            if (!response.ok) throw new Error('Erreur lors de la récupération des ruchers');
+            const data = await response.json();
+            setApiaries(data);
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const fetchHives = async (apiaryId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/api/hives/get_apiary_data`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    apiaryId: apiaryId,
+                    sort: 'name',
+                    search: ''
+                })
+            });
+            if (!response.ok) throw new Error('Erreur lors de la récupération des ruches');
+            const data = await response.json();
+            setHives(data.hives);
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const fetchHiveInfo = async (hiveId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/api/hives/get_hive_info`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ hiveId }),
+            });
+            if (!response.ok) throw new Error('Erreur lors de la récupération des informations de la ruche');
+            const data = await response.json();
+            setCurrentHiveInfo(data);
+            setSelectedHive(data.id);
+            setSelectedApiary(data.apiaryId);
+        } catch (err) {
+            setError(err.message);
+        }
+    };
 
     const handleImageSelect = (event) => {
         const file = event.target.files[0];
@@ -37,6 +146,8 @@ function VarroaScanner() {
             setError(null);
             setResults(null);
             setProcessedImageUrl(null);
+            setAnalysisComplete(false);
+            setHasUnsavedChanges(false);
         }
     };
 
@@ -49,31 +160,23 @@ function VarroaScanner() {
         try {
             const formData = new FormData();
             formData.append('image', selectedImage);
-            // Ajouter hiveId au formData si présent
-            if (hiveId) {
-                formData.append('hiveId', hiveId);
-            }
 
-            // Récupérer le token si l'utilisateur est connecté
             const token = localStorage.getItem('token');
-            const headers = token
-                ? {'Authorization': `Bearer ${token}`}
-                : {};
-
             const response = await fetch(`${API_URL}/api/images/process`, {
                 method: 'POST',
-                headers: headers,
-                body: formData,  // Utiliser directement formData, pas un objet le contenant
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData,
             });
 
-            if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.statusText}`);
-            }
+            if (!response.ok) throw new Error('Erreur lors du traitement de l\'image');
 
             const data = await response.json();
             setResults(data);
+            setAnalysisComplete(true);
+            setHasUnsavedChanges(true);
 
-            // Si l'API renvoie le nom de l'image traitée
             if (data.processed_image) {
                 setProcessedImageUrl(`${API_URL}/api/images/get/${data.processed_image}`);
             }
@@ -85,34 +188,93 @@ function VarroaScanner() {
         }
     };
 
-    const fetchHive = async () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            throw new Error('Veuillez vous connecter pour accéder à cette page');
+    const handleSaveAnalysis = async () => {
+        if (!selectedHive && !currentHiveInfo?.id) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/api/images/save_analysis`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    hiveId: currentHiveInfo?.id || selectedHive,
+                    varroaCount: results.varroa_count,
+                    picturePath: results.processed_image
+                }),
+            });
+
+            if (!response.ok) throw new Error('Erreur lors de l\'enregistrement de l\'analyse');
+
+            const data = await response.json();
+            setResults(prev => ({
+                ...prev,
+                saved: true,
+                analysis_id: data.analysis_id
+            }));
+            setHasUnsavedChanges(false);
+        } catch (err) {
+            setError(err.message);
         }
-
-        const response = await fetch(`${API_URL}/api/hives/get_hive_info`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({hiveId: hiveId}),
-        });
-
-        if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        setHive(data);
     };
 
     return (
         <div className="max-w-4xl mx-auto p-4 space-y-6">
             <h1 className="text-2xl font-bold text-center">Détection de Varroas</h1>
 
-            <h2 className="text-center">{hive ? `Cette analyse sera ajoutée à la ruche ${hive.name}, du rucher ${hive.apiaryName}` : ""}</h2>
+            {/* Information de la ruche sélectionnée via URL */}
+            {currentHiveInfo && (
+                <div className="text-center mb-4">
+                    <p className="text-lg">Analyse pour la ruche {currentHiveInfo.name} du rucher {currentHiveInfo.apiaryName}</p>
+                </div>
+            )}
+
+            {/* Sélection du rucher et de la ruche */}
+            {!hiveId && !analysisComplete && (
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Sélectionner un rucher
+                        </label>
+                        <select
+                            className="w-full p-2 border rounded"
+                            value={selectedApiary || ''}
+                            onChange={(e) => {
+                                setSelectedApiary(e.target.value);
+                                setSelectedHive(null);
+                            }}
+                        >
+                            <option value="">Choisir un rucher</option>
+                            {apiaries.map((apiary) => (
+                                <option key={apiary.id} value={apiary.id}>
+                                    {apiary.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Sélectionner une ruche
+                        </label>
+                        <select
+                            className="w-full p-2 border rounded"
+                            value={selectedHive || ''}
+                            onChange={(e) => setSelectedHive(e.target.value)}
+                            disabled={!selectedApiary}
+                        >
+                            <option value="">Choisir une ruche</option>
+                            {hives.map((hive) => (
+                                <option key={hive.id} value={hive.id}>
+                                    {hive.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            )}
 
             {/* Section de sélection d'image */}
             <div className="grid grid-cols-2 gap-4">
@@ -123,10 +285,11 @@ function VarroaScanner() {
                         onChange={handleImageSelect}
                         className="hidden"
                         id="image-input"
+                        disabled={processing}
                     />
                     <label
                         htmlFor="image-input"
-                        className="block text-center cursor-pointer"
+                        className={`block text-center ${!analysisComplete && !processing ? 'cursor-pointer' : ''}`}
                     >
                         {previewUrl ? (
                             <img
@@ -140,7 +303,6 @@ function VarroaScanner() {
                     </label>
                 </div>
 
-                {/* Affichage de l'image traitée */}
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                     {processedImageUrl ? (
                         <img
@@ -156,8 +318,8 @@ function VarroaScanner() {
                 </div>
             </div>
 
-            {/* Bouton de traitement */}
-            {selectedImage && (
+            {/* Bouton d'analyse (uniquement visible si image sélectionnée et analyse non effectuée) */}
+            {selectedImage && !analysisComplete && (
                 <button
                     onClick={handleSubmit}
                     disabled={processing}
@@ -169,24 +331,39 @@ function VarroaScanner() {
 
             {/* Affichage des résultats */}
             {results && (
-                <div className="border rounded-lg p-4">
-                    <h2 className="text-xl font-semibold mb-4">Résultats</h2>
+                <div className="border rounded-lg p-4 space-y-4">
+                    <h2 className="text-xl font-semibold">Résultats</h2>
                     <p>Nombre de varroas détectés : {results.varroa_count}</p>
                     <p>Temps de traitement : {results.processing_time}</p>
 
-                    {/* Statut de l'enregistrement */}
-                    <div className={`mt-4 p-2 rounded ${results.saved ? 'bg-green-100' : 'bg-yellow-100'}`}>
-                        {results.saved ? (
+                    {/* Bouton de sauvegarde */}
+                    {!results.saved && (selectedHive || currentHiveInfo) && (
+                        <button
+                            onClick={handleSaveAnalysis}
+                            className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600"
+                        >
+                            Enregistrer l'analyse
+                        </button>
+                    )}
+
+                    {results.saved && (
+                        <div className="p-2 rounded bg-green-100">
                             <p className="text-green-700">
                                 Analyse enregistrée avec succès (ID: {results.analysis_id})
                             </p>
-                        ) : (
-                            <p className="text-yellow-700">
-                                {results.error_message || results.message || "Analyse non enregistrée"}
-                            </p>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
+            )}
+
+            {/* Bouton nouvelle analyse */}
+            {analysisComplete && (
+                <button
+                    onClick={resetAnalysis}
+                    className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+                >
+                    Analyser une nouvelle image
+                </button>
             )}
 
             {/* Affichage des erreurs */}
