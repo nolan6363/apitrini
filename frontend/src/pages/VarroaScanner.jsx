@@ -11,6 +11,7 @@ function VarroaScanner() {
     const [results, setResults] = useState(null);
     const [error, setError] = useState(null);
     const { hiveId } = useParams();
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const [apiaries, setApiaries] = useState([]);
     const [hives, setHives] = useState([]);
@@ -19,6 +20,12 @@ function VarroaScanner() {
     const [analysisComplete, setAnalysisComplete] = useState(false);
     const [currentHiveInfo, setCurrentHiveInfo] = useState(null);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+    // Vérification de l'authentification au chargement
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        setIsAuthenticated(!!token);
+    }, []);
 
     // Gestionnaire pour prévenir la navigation si analyse non sauvegardée
     useEffect(() => {
@@ -34,17 +41,19 @@ function VarroaScanner() {
     }, [hasUnsavedChanges]);
 
     useEffect(() => {
-        fetchApiaries();
-        if (hiveId) {
-            fetchHiveInfo(hiveId);
+        if (isAuthenticated) {
+            fetchApiaries();
+            if (hiveId) {
+                fetchHiveInfo(hiveId);
+            }
         }
-    }, []);
+    }, [isAuthenticated]);
 
     useEffect(() => {
-        if (selectedApiary) {
+        if (isAuthenticated && selectedApiary) {
             fetchHives(selectedApiary);
         }
-    }, [selectedApiary]);
+    }, [selectedApiary, isAuthenticated]);
 
     useEffect(() => {
         if (selectedImage) {
@@ -54,7 +63,6 @@ function VarroaScanner() {
         }
     }, [selectedImage]);
 
-    // Mise à jour de hasUnsavedChanges quand une analyse est complétée
     useEffect(() => {
         if (analysisComplete && !results?.saved) {
             setHasUnsavedChanges(true);
@@ -62,16 +70,6 @@ function VarroaScanner() {
             setHasUnsavedChanges(false);
         }
     }, [analysisComplete, results?.saved]);
-
-    const resetAnalysis = () => {
-        setSelectedImage(null);
-        setPreviewUrl(null);
-        setProcessedImageUrl(null);
-        setResults(null);
-        setAnalysisComplete(false);
-        setHasUnsavedChanges(false);
-        setError(null);
-    };
 
     const fetchApiaries = async () => {
         try {
@@ -139,6 +137,16 @@ function VarroaScanner() {
         }
     };
 
+    const resetAnalysis = () => {
+        setSelectedImage(null);
+        setPreviewUrl(null);
+        setProcessedImageUrl(null);
+        setResults(null);
+        setAnalysisComplete(false);
+        setHasUnsavedChanges(false);
+        setError(null);
+    };
+
     const handleImageSelect = (event) => {
         const file = event.target.files[0];
         if (file) {
@@ -161,12 +169,16 @@ function VarroaScanner() {
             const formData = new FormData();
             formData.append('image', selectedImage);
 
-            const token = localStorage.getItem('token');
+            // Si l'utilisateur est connecté, on envoie le token
+            const headers = {};
+            if (isAuthenticated) {
+                const token = localStorage.getItem('token');
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch(`${API_URL}/api/images/process`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
+                headers,
                 body: formData,
             });
 
@@ -175,7 +187,9 @@ function VarroaScanner() {
             const data = await response.json();
             setResults(data);
             setAnalysisComplete(true);
-            setHasUnsavedChanges(true);
+            if (isAuthenticated) {
+                setHasUnsavedChanges(true);
+            }
 
             if (data.processed_image) {
                 setProcessedImageUrl(`${API_URL}/api/images/get/${data.processed_image}`);
@@ -188,51 +202,30 @@ function VarroaScanner() {
         }
     };
 
-    const handleSaveAnalysis = async () => {
-        if (!selectedHive && !currentHiveInfo?.id) return;
-
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/api/images/save_analysis`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    hiveId: currentHiveInfo?.id || selectedHive,
-                    varroaCount: results.varroa_count,
-                    picturePath: results.processed_image
-                }),
-            });
-
-            if (!response.ok) throw new Error('Erreur lors de l\'enregistrement de l\'analyse');
-
-            const data = await response.json();
-            setResults(prev => ({
-                ...prev,
-                saved: true,
-                analysis_id: data.analysis_id
-            }));
-            setHasUnsavedChanges(false);
-        } catch (err) {
-            setError(err.message);
-        }
-    };
-
     return (
         <div className="max-w-4xl mx-auto p-4 space-y-6">
             <h1 className="text-2xl font-bold text-center">Détection de Varroas</h1>
 
-            {/* Information de la ruche sélectionnée via URL */}
-            {currentHiveInfo && (
+            {/* Information de la ruche sélectionnée via URL (uniquement si authentifié) */}
+            {isAuthenticated && currentHiveInfo && (
                 <div className="text-center mb-4">
                     <p className="text-lg">Analyse pour la ruche {currentHiveInfo.name} du rucher {currentHiveInfo.apiaryName}</p>
                 </div>
             )}
 
-            {/* Sélection du rucher et de la ruche */}
-            {!hiveId && !analysisComplete && (
+            {/* Message pour les utilisateurs non connectés */}
+            {!isAuthenticated && (
+                <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-4">
+                    <p className="text-blue-800">
+                        Vous pouvez utiliser l'outil directement pour scanner vos plateaux.
+                        Si vous souhaitez sauvegarder vos analyses et les associer à vos ruches,
+                        vous pouvez vous connecter.
+                    </p>
+                </div>
+            )}
+
+            {/* Sélection du rucher et de la ruche (uniquement si authentifié) */}
+            {isAuthenticated && !hiveId && !analysisComplete && (
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -318,7 +311,7 @@ function VarroaScanner() {
                 </div>
             </div>
 
-            {/* Bouton d'analyse (uniquement visible si image sélectionnée et analyse non effectuée) */}
+            {/* Bouton d'analyse */}
             {selectedImage && !analysisComplete && (
                 <button
                     onClick={handleSubmit}
@@ -336,8 +329,8 @@ function VarroaScanner() {
                     <p>Nombre de varroas détectés : {results.varroa_count}</p>
                     <p>Temps de traitement : {results.processing_time}</p>
 
-                    {/* Bouton de sauvegarde */}
-                    {!results.saved && (selectedHive || currentHiveInfo) && (
+                    {/* Bouton de sauvegarde (uniquement si authentifié) */}
+                    {isAuthenticated && !results.saved && (selectedHive || currentHiveInfo) && (
                         <button
                             onClick={handleSaveAnalysis}
                             className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600"
