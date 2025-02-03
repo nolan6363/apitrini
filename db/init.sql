@@ -1,3 +1,5 @@
+create database apitrini_db;
+
 use apitrini_db;
 
 create table apiary
