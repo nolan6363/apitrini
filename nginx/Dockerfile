@@ -1,11 +1,20 @@
 FROM nginx:alpine
 
-# Installation de certbot et du plugin nginx
-RUN apk add --no-cache certbot certbot-nginx bash
+# Installer les outils nécessaires
+# net-tools fournit les commandes réseau de base comme netstat
+# procps fournit des commandes comme ps et pkill pour la gestion des processus
+RUN apk add --no-cache \
+    certbot \
+    certbot-nginx \
+    bash \
+    net-tools \
+    procps \
+    curl
 
-# Copie de la configuration nginx
-COPY nginx.conf /etc/nginx/nginx.conf
+# Copier les fichiers de configuration
+COPY init-config.conf /etc/nginx/init-config.conf
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Création du script d'initialisation SSL
-COPY init-ssl.sh /docker-entrypoint.d/
-RUN chmod +x /docker-entrypoint.d/init-ssl.sh
+# Définir le point d'entrée
+ENTRYPOINT ["/entrypoint.sh"]
