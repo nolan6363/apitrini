@@ -64,7 +64,7 @@ certbot --nginx \
     --email nolan.bayon@gmail.com \
     --agree-tos \
     --no-eff-email \
-    --domains apitrini.fr \
+    -d apitrini.fr -d varroa.apitrini.fr\
     --redirect \
     --non-interactive
 
