@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from "react-router-dom";
-import { API_URL } from "@/config/api.js";
+import React, {useState, useEffect} from 'react';
+import {useParams, useNavigate} from "react-router-dom";
+import {API_URL} from "@/config/api.js";
 
 function VarroaScanner() {
     const navigate = useNavigate();
@@ -10,7 +10,7 @@ function VarroaScanner() {
     const [processing, setProcessing] = useState(false);
     const [results, setResults] = useState(null);
     const [error, setError] = useState(null);
-    const { hiveId } = useParams();
+    const {hiveId} = useParams();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const [apiaries, setApiaries] = useState([]);
@@ -125,7 +125,7 @@ function VarroaScanner() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
-                body: JSON.stringify({ hiveId }),
+                body: JSON.stringify({hiveId}),
             });
             if (!response.ok) throw new Error('Erreur lors de la récupération des informations de la ruche');
             const data = await response.json();
@@ -202,6 +202,37 @@ function VarroaScanner() {
         }
     };
 
+    const handleSaveAnalysis = async () => {
+        if (!selectedHive && !currentHiveInfo?.id) return;
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/api/images/save_analysis`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    hiveId: currentHiveInfo?.id || selectedHive,
+                    varroaCount: results.varroa_count,
+                    picturePath: results.processed_image
+                }),
+            });
+            if (!response.ok) throw new Error('Erreur lors de l\'enregistrement de l\'analyse');
+
+
+            const data = await response.json();
+            setResults(prev => ({
+                ...prev,
+                saved: true,
+                analysis_id: data.analysis_id
+            }));
+            setHasUnsavedChanges(false);
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
     return (
         <div className="max-w-4xl mx-auto p-4 space-y-6">
             <h1 className="text-2xl font-bold text-center">Détection de Varroas</h1>
@@ -209,7 +240,8 @@ function VarroaScanner() {
             {/* Information de la ruche sélectionnée via URL (uniquement si authentifié) */}
             {isAuthenticated && currentHiveInfo && (
                 <div className="text-center mb-4">
-                    <p className="text-lg">Analyse pour la ruche {currentHiveInfo.name} du rucher {currentHiveInfo.apiaryName}</p>
+                    <p className="text-lg">Analyse pour la ruche {currentHiveInfo.name} du
+                        rucher {currentHiveInfo.apiaryName}</p>
                 </div>
             )}
 

@@ -9,7 +9,7 @@
         - ./backend/storage:/app/storage
         - pip_cache:/root/.cache/pip
       environment:
-        - VITE_API_URL=http://localhost:5000
+        - VITE_API_URL=http://www.apitrini.fr:5000
         - MYSQL_HOST=db
         - MYSQL_USER=apitrini
         - MYSQL_PASSWORD=#GetTheBeesToWork/667

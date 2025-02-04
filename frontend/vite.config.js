@@ -12,7 +12,7 @@ export default defineConfig({
         host: '0.0.0.0',
         port: 5173,
         strictPort: true,
-        // Configuration plus agressive de la surveillance des fichiers
+        allowedHosts: ['blablaomnes.fr', '.apitrini.fr'],
         watch: {
             usePolling: true,
             interval: 100,
