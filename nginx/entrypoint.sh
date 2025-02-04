@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Fonction pour tuer tous les processus Nginx
+kill_nginx() {
+    echo "Arrêt de tous les processus Nginx..."
+    # Utiliser pkill avec force (-9) si nécessaire
+    pkill nginx
+    sleep 2
+    pkill -9 nginx 2>/dev/null || true
+    sleep 1
+}
+
 # Fonction pour vérifier si un port est utilisé
 check_port() {
     local port=$1
@@ -9,51 +19,46 @@ check_port() {
 
 # Fonction pour attendre que les ports soient libres
 wait_for_ports() {
-    local timeout=30
+    local timeout=10  # Réduit à 10 secondes car nous sommes plus agressifs maintenant
     local count=0
-    echo "Attente de la libération des ports 80 et 443..."
+    echo "Vérification des ports 80 et 443..."
     while [ $count -lt $timeout ]; do
         if ! check_port 80 && ! check_port 443; then
             echo "Les ports sont libres"
             return 0
         fi
+        if [ $count -eq 5 ]; then
+            echo "Les ports sont toujours occupés, tentative de libération forcée..."
+            kill_nginx
+        fi
         sleep 1
         count=$((count + 1))
-        if [ $((count % 5)) -eq 0 ]; then
-            echo "Toujours en attente... ($count secondes)"
-        fi
     done
-    echo "Timeout en attendant la libération des ports"
+    echo "Impossible de libérer les ports"
     return 1
 }
 
 # Fonction pour gérer l'arrêt gracieux
 cleanup() {
     echo "Arrêt des services..."
-    if [ -f /var/run/nginx.pid ]; then
-        nginx -s quit
-    fi
+    kill_nginx
     exit 0
 }
 
 # Mettre en place le gestionnaire de signal
 trap cleanup SIGTERM SIGINT
 
-# Copier la configuration initiale
+# Configuration initiale
+echo "Configuration initiale..."
 cp /etc/nginx/init-config.conf /etc/nginx/nginx.conf
-
-# Créer le répertoire pour le challenge ACME
 mkdir -p /var/www/html/.well-known/acme-challenge
 chown -R nginx:nginx /var/www/html
 
-# S'assurer que nginx n'est pas en cours d'exécution
-if [ -f /var/run/nginx.pid ]; then
-    echo "Arrêt de l'instance Nginx existante..."
-    nginx -s quit
-    wait_for_ports || { echo "Impossible d'arrêter l'instance Nginx existante"; exit 1; }
-fi
+# S'assurer qu'aucun processus nginx n'est en cours
+kill_nginx
+wait_for_ports
 
-# Obtenir/renouveler le certificat
+# Obtenir le certificat
 echo "Démarrage du processus de certification..."
 certbot --nginx \
     --email nolan.bayon@gmail.com \
@@ -61,27 +66,24 @@ certbot --nginx \
     --no-eff-email \
     --domains apitrini.fr \
     --redirect \
-    --non-interactive \
-    --post-hook "nginx -s quit" \
-    --deploy-hook "nginx -s quit"
+    --non-interactive
 
-# Vérifier le statut de certbot
-if [ $? -ne 0 ]; then
-    echo "Erreur lors de l'obtention du certificat"
-    exit 1
-fi
+# S'assurer que tout processus Nginx est arrêté après Certbot
+kill_nginx
+wait_for_ports || { echo "Impossible de libérer les ports après certbot"; exit 1; }
 
 # Configurer le renouvellement automatique
 echo "Configuration du renouvellement automatique..."
-echo "0 0,12 * * * certbot renew --quiet --post-hook 'nginx -s quit'" | crontab -
+echo "0 0,12 * * * certbot renew --quiet --post-hook 'pkill nginx'" | crontab -
 
 # Démarrer crond en arrière-plan
 echo "Démarrage de crond..."
 crond &
 
-# Attendre que les ports soient disponibles une dernière fois
-wait_for_ports || { echo "Les ports ne sont pas disponibles pour le démarrage final"; exit 1; }
+# Vérifier la configuration Nginx avant le démarrage final
+echo "Vérification de la configuration Nginx..."
+nginx -t || { echo "La configuration Nginx est invalide"; exit 1; }
 
-# Démarrer nginx au premier plan
+# Démarrer Nginx au premier plan
 echo "Démarrage de Nginx..."
 exec nginx -g 'daemon off;'
