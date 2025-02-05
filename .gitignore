@@ -9,3 +9,5 @@ __pycache__/
 /ressources/
 /frontend/node_modules/
 /backend/storage/
+/nginx/letsencrypt
+/nginx/webroot
