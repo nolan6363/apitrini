@@ -103,8 +103,15 @@ def register():
         new_user_id = cur.lastrowid
         cur.close()
 
+        token = jwt.encode({
+            'user_id': new_user_id,
+            'email': email,
+            'exp': datetime.utcnow() + timedelta(hours=24)
+        }, SECRET_KEY)
+
         return jsonify({
             'message': 'Inscription réussie',
+            'token': token,
             'user': {
                 'id': new_user_id,
                 'email': email,
