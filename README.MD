@@ -34,7 +34,7 @@ git clone https://github.com/votre-username/apitrini.git
 cd apitrini
 
 # Lancer l'application avec Docker Compose
-docker compose -f docker-compose.dev.yml up -d --build
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 L'application sera accessible à l'adresse `http://localhost:5173`

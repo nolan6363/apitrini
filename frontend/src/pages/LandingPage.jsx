@@ -176,7 +176,9 @@ const LandingPage = () => {
                         Rejoignez les apiculteurs qui ont déjà modernisé leur approche
                     </p>
                     <button
-                        className="group inline-flex items-center bg-stone-50 px-8 py-4 rounded-lg text-lg font-semibold text-stone-900 hover:bg-white transition-all duration-300">
+                        className="group inline-flex items-center bg-stone-50 px-8 py-4 rounded-lg text-lg font-semibold text-stone-900 hover:bg-white transition-all duration-300"
+                        onClick={() => navigate('/varroa')}
+                    >
                         Commencer gratuitement
                         <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform"/>
                     </button>

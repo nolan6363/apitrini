@@ -10,7 +10,7 @@ from apitrini import create_app
 # Création de l'instance de l'application
 app = create_app()
 
-# Ces variables d'environnement peuvent être définies dans un fichier .env
+# Ces variables d'environnement peuvent être définies dans un fichier dev.env
 # ou directement dans votre environnement
 app.config.update(
     # Active le mode debug pour voir les erreurs en détail pendant le développement

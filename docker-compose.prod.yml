@@ -9,7 +9,7 @@ services:
       - ./backend/storage:/app/storage
       - pip_cache:/root/.cache/pip
     environment:
-      - VITE_API_URL=http://localhost:5000
+      - VITE_API_URL="https://api.apitrini.com/"
       - MYSQL_HOST=db
       - MYSQL_USER=apitrini
       - MYSQL_PASSWORD=#GetTheBeesToWork/667
@@ -22,7 +22,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: dev.Dockerfile
+      dockerfile: prod.Dockerfile
     container_name: apitrini-frontend
     ports:
       - "5173:5173"
@@ -30,8 +30,8 @@ services:
       - ./frontend:/frontend:cached
       - /frontend/node_modules
     environment:
-      - VITE_API_URL=http://localhost:5000
-      - NODE_ENV="development"
+      - VITE_API_URL=https://api.apitrini.com/
+      - NODE_ENV="production"
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
       - FAST_REFRESH=true
@@ -68,6 +68,20 @@ services:
         limits:
           cpus: '1'
           memory: 1G
+  nginx:
+    build: ./nginx
+    container_name: apitrini-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/letsencrypt:/etc/letsencrypt
+      - ./nginx/webroot:/var/www/html
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - apitrini-network
 
 networks:
   apitrini-network:
