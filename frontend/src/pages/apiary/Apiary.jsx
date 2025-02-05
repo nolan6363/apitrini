@@ -340,16 +340,28 @@ const Apiary = () => {
                 />
             )}
 
-            <SearchBar
-                onSearch={handleSearch}
-                onSort={handleSort}
-                currentSort={sortOption}
-                searchPlaceholder="Filtrer les ruches..."
-                sortOptions={[
-                    {value: 'name', label: 'Nom'},
-                    {value: 'date', label: 'Date'}
-                ]}
-            />
+            <div className="flex w-full">
+                <div className="w-1/3">
+                    <SearchBar
+                        onSearch={handleSearch}
+                        onSort={handleSort}
+                        currentSort={sortOption}
+                        searchPlaceholder="Filtrer les ruches..."
+                        sortOptions={[
+                            {value: 'name', label: 'Nom'},
+                            {value: 'date', label: 'Date'}
+                        ]}
+                    />
+                </div>
+
+                <button
+                    onClick={() => navigate(`/apiary/${apiaryId}/add`)}
+                    className="px-4 py-2 h-10 my-auto mx-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                >
+                    Ajouter une ruche
+                </button>
+            </div>
+
 
             <div className="flex flex-wrap mt-4">
                 {apiaryData.hives.length > 0 ? (

@@ -7,7 +7,7 @@ import VarroaScanner from "@/pages/VarroaScanner.jsx";
 import Register from "@/pages/auth/Register.jsx";
 import ApiaryList from "@/pages/apiary/ApiaryList.jsx";
 import CheckAuth from "@/components/features/auth/CheckAuth";
-import Apiary from "@/pages/hives/Apiary.jsx";
+import Apiary from "@/pages/apiary/Apiary.jsx";
 import CreateApiary from "@/pages/apiary/CreateApiary.jsx";
 import CreateHive from "@/pages/hives/CreateHive.jsx";
 import Hive from "@/pages/hives/Hive.jsx";
