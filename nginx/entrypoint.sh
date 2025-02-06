@@ -1,5 +1,7 @@
 #!/bin/bash
 
+apt-get update && apt-get install -y cron
+
 # Fonction pour tuer tous les processus Nginx
 kill_nginx() {
     echo "Arrêt de tous les processus Nginx..."
