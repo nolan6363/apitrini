@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     procps \
     curl \
     cron \
-    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copier les fichiers de configuration
 COPY init-config.conf /etc/nginx/init-config.conf
