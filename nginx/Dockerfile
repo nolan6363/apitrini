@@ -8,7 +8,8 @@ RUN apt-get update && apt-get install -y \
     net-tools \
     procps \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    cron \
+    && rm -rf /var/lib/apt/lists/* \
 
 # Copier les fichiers de configuration
 COPY init-config.conf /etc/nginx/init-config.conf
