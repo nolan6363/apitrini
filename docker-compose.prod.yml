@@ -24,21 +24,9 @@ services:
       context: ./frontend
       dockerfile: prod.Dockerfile
     container_name: apitrini-frontend
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/frontend:cached
-      - /frontend/node_modules
     environment:
       - VITE_API_URL=https://api.apitrini.com/
-      - NODE_ENV="production"
-      - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true
-      - FAST_REFRESH=true
-      - VITE_DEV_SERVER_HOST=0.0.0.0
-      - VITE_DEV_SERVER_PORT=5173
-      - VITE_HMR_PROTOCOL=ws
-      - VITE_HMR_TIMEOUT=120000
+      - NODE_ENV=production
     networks:
       - apitrini-network
     deploy:
