@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
 COPY init-config.conf /etc/nginx/init-config.conf
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+RUN rm -rf ./nginx/letsencrypt/*
 
 # Définir le point d'entrée
 ENTRYPOINT ["/entrypoint.sh"]
