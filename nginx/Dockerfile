@@ -1,15 +1,14 @@
-FROM nginx:alpine
+FROM nginx:1.24.0
 
 # Installer les outils nécessaires
-# net-tools fournit les commandes réseau de base comme netstat
-# procps fournit des commandes comme ps et pkill pour la gestion des processus
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     certbot \
-    certbot-nginx \
+    python3-certbot-nginx \
     bash \
     net-tools \
     procps \
-    curl
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copier les fichiers de configuration
 COPY init-config.conf /etc/nginx/init-config.conf
